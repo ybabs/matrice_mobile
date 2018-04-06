@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/colorWhite">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/TransGrey"/>
 
-</selector>
+            <size android:width="30dp"
+                android:height="30dp"/>
+            <corners
+                android:bottomLeftRadius="10dp"
+                android:bottomRightRadius="10dp"
+                android:topLeftRadius="10dp"
+                android:topRightRadius="10dp"/>
+        </shape>
+    </item>
+</ripple>

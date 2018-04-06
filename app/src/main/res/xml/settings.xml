@@ -1,4 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Connection">
+        <EditTextPreference
+            android:defaultValue="131.231.187.145"
+            android:key="address"
+            android:summary="Drone IP Address"
+            android:title="IP ADDRESS" />
+
+        <EditTextPreference
+            android:defaultValue="11311"
+            android:key="port"
+            android:summary="ROS Master Port"
+            android:title="Port"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Telemetry">
+        <EditTextPreference android:defaultValue="10"
+            android:key="frequency"
+            android:summary="Publishing rate for sending data"
+            android:title="Frequency (Hz)" />
+
+    </PreferenceCategory>
 
 </PreferenceScreen>

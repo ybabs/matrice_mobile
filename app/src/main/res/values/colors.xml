@@ -10,4 +10,5 @@
     <color name="colorRed">#f71616</color>
     <color name="TransBlack">#767676</color>
     <color name="colorBlack">#000000</color>
+    <color name="TransGrey">#d1191919</color>
 </resources>

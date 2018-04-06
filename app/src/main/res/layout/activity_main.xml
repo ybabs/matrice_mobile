@@ -3,7 +3,8 @@
     android:animateLayoutChanges="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:id="@+id/main_relativelayout">
 
     <LinearLayout
         android:id="@+id/main_statusbar"
@@ -138,12 +139,13 @@
 
     </LinearLayout>
 
-    <com.google.gms.maps.MapView
+    <fragment
         android:id="@+id/mapview"
+        class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-    </com.google.gms.maps.MapView>
+    </fragment>
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -155,7 +157,8 @@
         android:layout_marginRight="10dp"
         android:background="@drawable/rounded_edge_background"
         android:elevation="2dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:id="@+id/new_mission">
 
         <ImageView
             android:layout_width="40dp"
@@ -179,10 +182,11 @@
         android:layout_alignParentBottom="true"
         android:drawablePadding="10dp"
         android:layout_marginLeft="10dp"
+        android:layout_marginBottom="5dp"
         android:text="START"
-        android:textColor="@color/colorWhite"
-        android:backgroundTint="@color/colorGreen"
-        />
+        android:textColor="@color/TransGrey"
+        android:background="@drawable/green_rounded_background" />
+
 
     <Button
         android:layout_width="wrap_content"
@@ -191,11 +195,12 @@
         android:id="@+id/abort_btn"
         android:layout_toRightOf="@id/start_btn"
         android:layout_alignParentBottom="true"
-        android:textColor="@color/colorWhite"
+        android:textColor="@color/TransGrey"
+        android:layout_marginBottom="5dp"
+        android:layout_marginLeft="5dp"
         android:text="ABORT"
         android:drawablePadding="10dp"
-        android:backgroundTint="@color/colorRed"
-        />
+        android:background="@drawable/red_rounded_background" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -278,7 +283,7 @@
         android:layout_width="350dp"
         android:layout_height="30dp"
         android:layout_marginBottom="10dp"
-        android:background="@drawable/rounded_edge_background"
+        android:background="@drawable/transparent_background"
         android:gravity="center_vertical"
         android:layout_alignParentBottom="true"
         android:id="@+id/telemetry_data_layout"

@@ -13,12 +13,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+
 
 
 
@@ -38,12 +36,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:name=".drone.MApplication">
 
-
-        <meta-data
-            android:name="com.dji.sdk.API_KEY"
-            android:value="e91829f19da69e7bbb258497" />
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
@@ -53,9 +48,17 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+
+        <uses-library android:name="com.google.android.maps" />
+
+        <uses-library android:name="com.android.future.usb.accessory" />
+        <meta-data
+            android:name="com.dji.sdk.API_KEY"
+            android:value="246f0648b49e8e6141e7897a" />
+
         <activity
             android:name="dji.sdk.sdkmanager.DJIAoaControllerActivity"
-            android:theme="@android:style/Theme.Translucent">
+            android:theme="@android:style/Theme.Translucent" >
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
             </intent-filter>
@@ -64,14 +67,17 @@
                 android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"
                 android:resource="@xml/accessory_filter" />
         </activity>
+        <service android:name="dji.sdk.sdkmanager.DJIGlobalService" >
+        </service>
 
         <service android:name="dji.sdk.sdkmanager.DJIGlobalService" ></service>
 
         <activity android:name=".MainActivity"
-            android:screenOrientation="landscape">
+            android:screenOrientation="landscape"
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <!--<category android:name="android.intent.category.LAUNCHER" />-->
 
             </intent-filter>
         </activity>
@@ -79,13 +85,20 @@
         <activity android:name=".ui.SplashActivity"
             android:screenOrientation="landscape"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:theme="@style/FullScreenTheme">
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER" />
 
             </intent-filter>
         </activity>
+
+        <activity android:name=".ui.SettingsActivity"
+                 android:label="Settings"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme"/>
+
+
     </application>
 
 </manifest>
