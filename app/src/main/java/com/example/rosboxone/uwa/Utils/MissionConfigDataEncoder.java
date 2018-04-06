@@ -4,26 +4,27 @@ import com.google.android.gms.maps.model.LatLng;
 import static com.example.rosboxone.uwa.Utils.DataUtil.FloatToBytes;
 import static com.example.rosboxone.uwa.Utils.DataUtil.DoubleToBytes;
 
+//TODO change array size so you can send orientation and mission_end in just bytes
 
 public class MissionConfigDataEncoder {
 
 
 
-    private static final int ARRAY_SIZE = 33;
+    private static final int ARRAY_SIZE = 27;
     private static final int WAYPOINT_LATITUDE = 0;
     private static final int WAYPOINT_LONGITUDE = 8;
     private static final int WAYPOINT_ALTITUDE = 16;
-    private static final int WAYPOINT_ORIENTATION = 20;
-    private static final int WAYPOINT_SPEED = 24;
-    private static final int MISSION_END = 28;
-    private static final int NULL_POSITION = 32;
+    private static final int WAYPOINT_ORIENTATION = 17;
+    private static final int WAYPOINT_SPEED = 21;
+    private static final int MISSION_END = 25;
+    private static final int NULL_POSITION = 26;
 
 
     private  double mLatitude;
     private  double mLongitude;
     private  float mAltitude;
-    private  float mOrientation;
-    private  float mMissionEnd;
+    private  byte mOrientation;
+    private  byte mMissionEnd;
     private  float mSpeed;
 
     public MissionConfigDataEncoder()
@@ -31,13 +32,13 @@ public class MissionConfigDataEncoder {
         mLatitude = 0L;
         mLongitude = 0L;
         mAltitude = 0L;
-        mOrientation = 0L;
+        mOrientation = 0x0;
         mSpeed = 0L;
-        mMissionEnd = 0L;
+        mMissionEnd = 0x0;
     }
 
 
-    public MissionConfigDataEncoder(LatLng location, float altitude,float speed, float orientation, float mission_end )
+    public MissionConfigDataEncoder(LatLng location, float altitude,float speed, byte orientation, byte mission_end )
     {
         mLatitude = (float)location.latitude;
         mLongitude = (float)location.longitude;
@@ -56,9 +57,9 @@ public class MissionConfigDataEncoder {
         DoubleToBytes(configData, WAYPOINT_LATITUDE, mLatitude);
         DoubleToBytes(configData, WAYPOINT_LONGITUDE, mLongitude);
         FloatToBytes(configData, WAYPOINT_ALTITUDE, mAltitude);
-        FloatToBytes(configData, WAYPOINT_ORIENTATION, mOrientation);
+        configData[WAYPOINT_ORIENTATION] = mOrientation;
         FloatToBytes(configData, WAYPOINT_SPEED, mSpeed);
-        FloatToBytes(configData, MISSION_END, mMissionEnd);
+        configData[MISSION_END] = mMissionEnd;
         configData[NULL_POSITION] = (byte)0x0;
 
         return configData;
@@ -161,15 +162,15 @@ public class MissionConfigDataEncoder {
         this.mAltitude = altitude;
     }
 
-//    public void setCourseLock(float latitude)
-//    {
-//        this.mLatitude = latitude;
-//    }
-//
-//    public void setMissionEnd(float latitude)
-//    {
-//        this.mLatitude = latitude;
-//    }
+    public void setCourseLock(byte orientation)
+    {
+        this.mOrientation = orientation;
+    }
+
+    public void setMissionEnd(byte missionEndVal)
+    {
+        this.mMissionEnd = missionEndVal;
+    }
 
 
 

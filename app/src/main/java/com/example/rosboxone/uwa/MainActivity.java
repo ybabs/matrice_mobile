@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.rosboxone.uwa.Utils.MissionConfigDataEncoder;
+import com.example.rosboxone.uwa.Utils.MissionEndCommand;
 import com.example.rosboxone.uwa.drone.Registration;
 import com.example.rosboxone.uwa.drone.Rotorcraft;
 import com.example.rosboxone.uwa.ui.SettingsActivity;
@@ -209,6 +210,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void initOnClickListener()
     {
+        newMission.setClickable(true);
+
         // Make hamburger Menu Clickable
         leftMenu.setClickable(true);
         leftMenu.setOnClickListener(new View.OnClickListener()
@@ -218,14 +221,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             {
                 hamburgerRelativeLayout.setVisibility(View.VISIBLE);
 
-//                switch (v.getId())
-//                {
-//                    case R.id.ros_settings_button:
-//                        Intent settingsIntent = new Intent(this, SettingsActivity.class);
-//                        startActivity(settingsIntent);
-//
-//                }
+            }
+        });
 
+        newMission.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+
+                flightConfigPanel.setVisibility(view.VISIBLE);
 
             }
         });
@@ -463,6 +467,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         mainActivityLayout = (RelativeLayout) findViewById(R.id.main_relativelayout);
         flightConfigPanel = (RelativeLayout) LayoutInflater.from(MainActivity.this).inflate(R.layout.mission_configuration, null);
+        RelativeLayout.LayoutParams missionParams = new RelativeLayout.LayoutParams(500, ViewGroup.LayoutParams.MATCH_PARENT);
+        missionParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        mainActivityLayout.addView(flightConfigPanel, missionParams);
+
         heightSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.height_param_seekbar);
         speedSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.speed_param_seekbar);
         missionOk = (Button) flightConfigPanel.findViewById(R.id.config_ok_btn);
@@ -503,7 +511,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
             {
-                heightSeekbarTextView.setText(String.format(Locale.UK, "Speed:  %d m/s", progress + 1));
+                heightSeekbarTextView.setText(String.format(Locale.UK, "Height:  %d m", progress + 1));
 
             }
 
@@ -522,7 +530,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
             {
-                speedSeekbarTextView.setText(String.format(Locale.UK, "Height: %d m", progress));
+                speedSeekbarTextView.setText(String.format(Locale.UK, "Speed: %d m/s", progress));
 
             }
 
@@ -645,6 +653,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         markers.add(marker);
     }
 
+
+
     @Override
     public void onClick(View v)
     {
@@ -660,39 +670,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 mAltitude = heightSeekbar.getProgress();
                 mSpeed = speedSeekbar.getProgress();
+                byte orientationCommand;
+                byte missionEndCommand;
 
                 switch (orientationRadioGroup.getCheckedRadioButtonId())
                 {
-                    case R.id.orientInitial_radio_button:
 
+                    //TODO Document Orientation commands properly
+                    case R.id.orientInitial_radio_button:
+                        orientationCommand = 1;
+                        missionConfigDataEncoder.setCourseLock(orientationCommand);
                         break;
 
                     case R.id.orientNext_radio_button:
+                        orientationCommand = 2;
+                        missionConfigDataEncoder.setCourseLock(orientationCommand);
                         break;
 
                     case R.id.orientWaypoint_radio_button:
+                        orientationCommand = 4;
+                        missionConfigDataEncoder.setCourseLock(orientationCommand);
                         break;
 
                     case R.id.orientRc_radio_button:
+                        orientationCommand = 3;
+                        missionConfigDataEncoder.setCourseLock(orientationCommand);
                         break;
                 }
 
                 switch(missionEndRadioGroup.getCheckedRadioButtonId())
                 {
+                    //TODO Document Mission END commands properly
                     case R.id.hover_radio_button:
-
+                        missionEndCommand = 1;
+                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
                         break;
 
                     case R.id.waypoint_radio_button:
+                        missionEndCommand = 2;
+                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
                         break;
 
                     case R.id.returnhome_radio_button:
+                        missionEndCommand = 3;
+                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
                         break;
 
                     case R.id.autoland_radio_button:
+                        missionEndCommand = 4;
+                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
                         break;
                 }
+                flightConfigPanel.setVisibility(v.GONE);
                 break;
+
+            case R.id.config_cancel_btn:
+                flightConfigPanel.setVisibility(v.GONE);
+                break;
+
+
+
 
             default:
                 break;
