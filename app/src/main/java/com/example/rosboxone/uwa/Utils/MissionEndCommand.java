@@ -21,18 +21,3 @@ public enum MissionEndCommand
 //TODO change to bytes
 
 
-//public enum MissionEndCommand
-//{
-//    AUTO(1),
-//
-//    INITIAL(2),
-//
-//    RC(3),
-//
-//    WAYPOINT(4)
-//    ;
-//    private final float EndMission;
-//    private MissionEndCommand(float EndMission) {
-//        this.EndMission = EndMission;
-//    }
-//}

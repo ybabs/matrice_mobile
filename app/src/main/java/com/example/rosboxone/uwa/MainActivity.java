@@ -33,7 +33,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.rosboxone.uwa.Utils.MissionConfigDataEncoder;
+import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
 import com.example.rosboxone.uwa.Utils.MissionEndCommand;
+import com.example.rosboxone.uwa.drone.Communication;
 import com.example.rosboxone.uwa.drone.Registration;
 import com.example.rosboxone.uwa.drone.Rotorcraft;
 import com.example.rosboxone.uwa.ui.SettingsActivity;
@@ -58,8 +60,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.common.mission.waypoint.Waypoint;
+import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
+import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 
@@ -101,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = MainActivity.class.getName();
 
     MissionConfigDataEncoder missionConfigDataEncoder;
+    MissionConfigDataManager missionConfigDataManager;
 
     private LatLng homeLatLng;
 
@@ -153,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     SupportMapFragment mapFragment;
 
     private Rotorcraft rotorcraft;
+    private Communication communication;
 
     public static MainActivity getInstance()
     {
@@ -178,8 +184,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         missionConfigDataEncoder = new MissionConfigDataEncoder();
+        missionConfigDataManager = new MissionConfigDataManager();
 
         super.onCreate(savedInstanceState);
+
+        communication = new Communication();
 
         setWindowAttributes();
 
@@ -470,6 +479,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         RelativeLayout.LayoutParams missionParams = new RelativeLayout.LayoutParams(500, ViewGroup.LayoutParams.MATCH_PARENT);
         missionParams.addRule(RelativeLayout.ALIGN_PARENT_END);
         mainActivityLayout.addView(flightConfigPanel, missionParams);
+        flightConfigPanel.setVisibility(View.GONE);
 
         heightSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.height_param_seekbar);
         speedSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.speed_param_seekbar);
@@ -565,7 +575,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         googleMap.setOnMapClickListener(this);
         googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
-            public void onMapLongClick(LatLng latLng) {
+            public void onMapLongClick(LatLng point) {
+
+                markWayPoint(point);
+
+                if(point != null) {
+
+                    missionConfigDataEncoder.setLatitude(point.latitude);
+                    missionConfigDataEncoder.setLongitude(point.longitude);
+                    missionConfigDataEncoder.setAltitude(mAltitude);
+                    missionConfigDataEncoder.setSpeed(mSpeed);
+
+                    missionConfigDataManager.setMissionData(missionConfigDataEncoder);
+                }
+
 
             }
         });
@@ -625,12 +648,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onMapClick(LatLng point)
     {
         hamburgerRelativeLayout.setVisibility(View.GONE);
-        markWayPoint(point);
+        flightConfigPanel.setVisibility(View.GONE);
 
-        missionConfigDataEncoder.setLatitude(point.latitude);
-        missionConfigDataEncoder.setLongitude(point.longitude);
-        missionConfigDataEncoder.setAltitude(mAltitude);
-        missionConfigDataEncoder.setSpeed(mSpeed);
+//        markWayPoint(point);
+//
+//        missionConfigDataEncoder.setLatitude(point.latitude);
+//        missionConfigDataEncoder.setLongitude(point.longitude);
+//        missionConfigDataEncoder.setAltitude(mAltitude);
+//        missionConfigDataEncoder.setSpeed(mSpeed);
 
 
 
@@ -721,11 +746,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         missionConfigDataEncoder.setMissionEnd(missionEndCommand);
                         break;
                 }
+                missionConfigDataManager.setMissionData(missionConfigDataEncoder);
+
+                FlightController djiFC = rotorcraft.getFlightControllerInstance();
+
+                //Retrieve current Data
+                MissionConfigDataEncoder data = missionConfigDataManager.getNextMissionData();
+                if(data == null)
+                {
+                    return;
+                }
+
+                // Send Data
+                byte[] bytes = data.getConfigData();
+                djiFC.sendDataToOnboardSDKDevice(bytes, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError) {
+
+                        if (djiError == null)
+                        {
+                            Log.d(TAG, "DATA SENT TO ONBOARD DEVICE");
+                        }
+
+                        else
+                        {
+                            Log.e(TAG, djiError.getDescription());
+                        }
+
+
+                    }
+                });
+
+
                 flightConfigPanel.setVisibility(v.GONE);
+
+
+
+
+
+
                 break;
 
             case R.id.config_cancel_btn:
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        googleMap.clear();
+                    }
+
+                });
+
+                missionConfigDataEncoder = null;
                 flightConfigPanel.setVisibility(v.GONE);
+
                 break;
 
 

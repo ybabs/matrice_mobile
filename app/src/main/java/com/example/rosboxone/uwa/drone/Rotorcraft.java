@@ -8,6 +8,8 @@ package com.example.rosboxone.uwa.drone;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
+
 import dji.common.error.DJIError;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseProduct;
@@ -25,9 +27,12 @@ public class Rotorcraft {
     private  Aircraft mAircraft;
 
 
+
     // Constructor for the drone
     public Rotorcraft()
     {
+        //Start Drone comms here
+       // communication = new Communication();
 
 
     }
@@ -102,6 +107,8 @@ public class Rotorcraft {
     {
         initFlightController();
     }
+
+
 
 
 

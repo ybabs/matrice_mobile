@@ -3,6 +3,9 @@ package com.example.rosboxone.uwa.Utils;
 import android.os.Handler;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MissionConfigDataManager {
 
     private final static String TAG = MissionConfigDataManager.class.getName();
@@ -11,7 +14,7 @@ public class MissionConfigDataManager {
 
     private Runnable mListener;
 
-    private MissionConfigDataEncoder Waypoints;
+    private List<MissionConfigDataEncoder> waypointsList = new ArrayList<>();
 
     private Boolean mReady = false;
 
@@ -19,7 +22,22 @@ public class MissionConfigDataManager {
     // Set current GPS Data to be sent
     public void setMissionData(MissionConfigDataEncoder missionData)
     {
-        Waypoints = missionData;
+
+        waypointsList.add(missionData);
+
+        if(!mReady)
+        {
+            Log.d(TAG, "Mission Manager Ready");
+            mReady = true;
+
+
+            // Broadcast that Mission manager is ready
+            if (mListener != null)
+            {
+                mHandler.post(mListener);
+
+            }
+        }
 
     }
 
@@ -29,12 +47,14 @@ public class MissionConfigDataManager {
     {
         MissionConfigDataEncoder dataEncoder = new MissionConfigDataEncoder();
 
-        if(Waypoints != null)
+        if(waypointsList.size() > 0)
         {
-            dataEncoder = Waypoints;
-            Waypoints = null;
-        }
+            for (int i = 0; i < waypointsList.size(); i++) {
 
+                    dataEncoder = waypointsList.get(i);
+
+            }
+        }
 
         return dataEncoder;
 
@@ -45,7 +65,7 @@ public class MissionConfigDataManager {
     {
         Log.d(TAG, "Restarting Data Encoder Manager");
         mReady = false;
-        Waypoints = null;
+        waypointsList = null;
 
     }
 
@@ -54,6 +74,8 @@ public class MissionConfigDataManager {
     {
         mListener = listener;
     }
+
+
 }
 
 

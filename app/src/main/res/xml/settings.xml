@@ -3,13 +3,13 @@
     <PreferenceCategory android:title="Connection">
         <EditTextPreference
             android:defaultValue="131.231.187.145"
-            android:key="address"
+            android:key="@string/ip_address"
             android:summary="Drone IP Address"
             android:title="IP ADDRESS" />
 
         <EditTextPreference
             android:defaultValue="11311"
-            android:key="port"
+            android:key="@string/port"
             android:summary="ROS Master Port"
             android:title="Port"/>
 
@@ -17,7 +17,7 @@
 
     <PreferenceCategory android:title="Telemetry">
         <EditTextPreference android:defaultValue="10"
-            android:key="frequency"
+            android:key="@string/freq_update_key"
             android:summary="Publishing rate for sending data"
             android:title="Frequency (Hz)" />
 
