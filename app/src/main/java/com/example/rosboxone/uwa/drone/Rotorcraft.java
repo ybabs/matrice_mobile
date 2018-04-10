@@ -5,13 +5,6 @@ package com.example.rosboxone.uwa.drone;
  * Created by rosboxone on 08/03/18.
  */
 
-import android.content.Context;
-import android.widget.Toast;
-
-import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
-
-import dji.common.error.DJIError;
-import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseProduct;
 import  dji.sdk.flightcontroller.FlightController;
 import dji.sdk.battery.Battery;

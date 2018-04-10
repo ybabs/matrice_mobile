@@ -1,81 +1,282 @@
 package com.example.rosboxone.uwa.Utils;
 
+import android.content.Context;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
+import android.widget.Toast;
+
+import com.example.rosboxone.uwa.MainActivity;
+import com.example.rosboxone.uwa.drone.Rotorcraft;
+import com.google.android.gms.maps.model.LatLng;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import dji.common.error.DJIError;
+import dji.common.util.CommonCallbacks;
+import dji.sdk.flightcontroller.FlightController;
+
+import static com.example.rosboxone.uwa.Utils.DataUtil.FloatToBytes;
+import static com.example.rosboxone.uwa.Utils.DataUtil.DoubleToBytes;
+
+//TODO change array size so you can send orientation and mission_end in just bytes
+
 public class MissionConfigDataManager {
 
-    private final static String TAG = MissionConfigDataManager.class.getName();
-
-    private final Handler mHandler = new Handler();
-
-    private Runnable mListener;
-
-    private List<MissionConfigDataEncoder> waypointsList = new ArrayList<>();
-
-    private Boolean mReady = false;
+    private static final String TAG = MissionConfigDataManager.class.getName();
+//    private  final Handler mHandler;
+//    private final HandlerThread mThread;
 
 
-    // Set current GPS Data to be sent
-    public void setMissionData(MissionConfigDataEncoder missionData)
+    private List<byte[]>ConfigDataList = new ArrayList<>();
+
+
+
+    private static final int ARRAY_SIZE = 27;
+    private static final int WAYPOINT_LATITUDE = 0;
+    private static final int WAYPOINT_LONGITUDE = 8;
+    private static final int WAYPOINT_ALTITUDE = 16;
+    private static final int WAYPOINT_ORIENTATION = 17;
+    private static final int WAYPOINT_SPEED = 21;
+    private static final int MISSION_END = 25;
+    private static final int NULL_POSITION = 26;
+
+
+    private  double mLatitude;
+    private  double mLongitude;
+    private  float mAltitude;
+    private  byte mOrientation;
+    private  byte mMissionEnd;
+    private  float mSpeed;
+    private boolean mReady;
+
+
+
+
+    public MissionConfigDataManager()
     {
 
-        waypointsList.add(missionData);
+        mLatitude = 0L;
+        mLongitude = 0L;
+        mAltitude = 0L;
+        mOrientation = 0x0;
+        mSpeed = 0L;
+        mMissionEnd = 0x0;
 
-        if(!mReady)
+    }
+
+    public byte [] getConfigData()
+    {
+        byte[] configData = new byte [ARRAY_SIZE];
+
+        DoubleToBytes(configData, WAYPOINT_LATITUDE, mLatitude);
+        DoubleToBytes(configData, WAYPOINT_LONGITUDE, mLongitude);
+        FloatToBytes(configData, WAYPOINT_ALTITUDE, mAltitude);
+        configData[WAYPOINT_ORIENTATION] = mOrientation;
+        FloatToBytes(configData, WAYPOINT_SPEED, mSpeed);
+        configData[MISSION_END] = mMissionEnd;
+        configData[NULL_POSITION] = (byte)0x0;
+
+        ConfigDataList.add(configData);
+
+        return configData;
+    }
+
+//    public void sendMissionData(byte [] data)
+//    {
+//
+//        if(!mReady)
+//        {
+//            Log.d(TAG, "Mission Data Manager Ready");
+//            mReady = true;
+//
+//        }
+//
+//        String text =Integer.toString(ConfigDataList.size());
+//
+//                if(ConfigDataList.size() > 0)
+//                {
+//                    for (int i = 0; i < ConfigDataList.size(); i++)
+//                    {
+//                        byte [] bytes = ConfigDataList.get(i);
+//
+//                        Toast.makeText(MainActivity.getInstance().getApplicationContext(), text, Toast.LENGTH_LONG).show();
+//
+//                        djiFC.sendDataToOnboardSDKDevice(bytes, new CommonCallbacks.CompletionCallback() {
+//                            @Override
+//                            public void onResult(DJIError djiError) {
+//
+//                                if (djiError == null)
+//                                {
+//                                    Log.d(TAG, "Sent Data to Onboard Device");
+//                                }
+//
+//                                else
+//                                {
+//                                    Log.e(TAG, djiError.getDescription());
+//                                }
+//
+//                            }
+//                        });
+//
+//                    }
+//                }
+//
+//    }
+
+    public void sendMissionData(byte [] data,  FlightController djiFC)
+    {
+
+        if(djiFC != null)
         {
-            Log.d(TAG, "Mission Manager Ready");
-            mReady = true;
-
-
-            // Broadcast that Mission manager is ready
-            if (mListener != null)
+            if(ConfigDataList.size() > 0)
             {
-                mHandler.post(mListener);
+
+                for(int i = 0; i < ConfigDataList.size(); i++)
+                {
+
+                    data = ConfigDataList.get(i);
+
+                    djiFC.sendDataToOnboardSDKDevice(data, new CommonCallbacks.CompletionCallback() {
+                        @Override
+                        public void onResult(DJIError djiError) {
+
+                            if (djiError == null) {
+                                Log.d(TAG, "Sent Data to Onboard Device");
+                            } else {
+                                Log.e(TAG, djiError.getDescription());
+                            }
+
+                        }
+                    });
+
+                }
+
 
             }
+
+
         }
+
+        else
+            {
+                Toast.makeText(MainActivity.getInstance().getApplicationContext(), "NO FC", Toast.LENGTH_LONG).show();
+            }
 
     }
 
-    // get next Mission Data
-
-    public MissionConfigDataEncoder getNextMissionData()
+    @Override
+    public String toString()
     {
-        MissionConfigDataEncoder dataEncoder = new MissionConfigDataEncoder();
+        return "Latitude: " + getLatitude() + "\nLongitude: " + getLongitude()
+                +"\nAltitude: " + getAltitude() + "\nSpeed: " + getSpeed()
+                +"\nOrientation: " + getOrientation() + "\nMissionEnd: "+ getMissionEnd();
 
-        if(waypointsList.size() > 0)
+    }
+
+
+    public String getMissionEnd()
+    {
+
+        if(mMissionEnd == 1)
         {
-            for (int i = 0; i < waypointsList.size(); i++) {
-
-                    dataEncoder = waypointsList.get(i);
-
-            }
+            return "HOVER";
+        }
+        if(mMissionEnd == 2)
+        {
+            return  "FIRST WAYPOINT";
         }
 
-        return dataEncoder;
+        if(mMissionEnd == 3)
+        {
+            return  "RETURN HOME";
+        }
 
+        if(mMissionEnd == 4)
+        {
+            return "AUTO LAND";
+        }
+
+        return "No Mission End Behaviour";
+    }
+    public double getLatitude() {
+        return mLatitude;
     }
 
-    // Send a signal saying it's ready to send data again
-    public void ready()
+    public  double getLongitude()
     {
-        Log.d(TAG, "Restarting Data Encoder Manager");
-        mReady = false;
-        waypointsList = null;
-
+        return mLongitude;
     }
 
-    // Is invoked when Manager is ready to send data
-    public void setReadyListener(Runnable listener)
+    public  float getAltitude()
     {
-        mListener = listener;
+        return mAltitude;
     }
+
+    public float getSpeed()
+    {
+        return mSpeed;
+    }
+
+    public String getOrientation()
+    {
+        if (mOrientation == 1)
+        {
+            return "AUTO";
+        }
+
+        if(mOrientation == 2)
+        {
+            return "INITIAL";
+        }
+
+        if(mOrientation == 3)
+        {
+            return "RC";
+        }
+
+        if(mOrientation == 4)
+        {
+            return "WAYPOINT";
+        }
+
+        return "NO ORIENTATION";
+    }
+
+    public void setLatitude(double latitude)
+    {
+        this.mLatitude = latitude;
+    }
+
+    public void setLongitude(double longitude)
+    {
+        this.mLongitude = longitude;
+    }
+
+    public void setSpeed(float speed)
+    {
+        this.mSpeed = speed;
+    }
+    public void setAltitude(float altitude)
+    {
+        this.mAltitude = altitude;
+    }
+
+    public void setCourseLock(byte orientation)
+    {
+        this.mOrientation = orientation;
+    }
+
+    public void setMissionEnd(byte missionEndVal)
+    {
+        this.mMissionEnd = missionEndVal;
+    }
+
+
+
+
 
 
 }
-
-

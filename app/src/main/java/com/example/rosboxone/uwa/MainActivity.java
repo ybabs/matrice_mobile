@@ -18,8 +18,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -32,9 +30,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.rosboxone.uwa.Utils.MissionConfigDataEncoder;
+
 import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
-import com.example.rosboxone.uwa.Utils.MissionEndCommand;
 import com.example.rosboxone.uwa.drone.Communication;
 import com.example.rosboxone.uwa.drone.Registration;
 import com.example.rosboxone.uwa.drone.Rotorcraft;
@@ -59,7 +56,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.mission.waypoint.Waypoint;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
@@ -95,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private GoogleMap googleMap;
     private Handler mHandler;
-    ArrayList<Marker> markers = new ArrayList<>();
+    ArrayList<Marker> markerArrayList = new ArrayList<>();
     private static BaseProduct mProduct;
 
     private float mAltitude = 10.0f;
@@ -104,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = MainActivity.class.getName();
 
-    MissionConfigDataEncoder missionConfigDataEncoder;
     MissionConfigDataManager missionConfigDataManager;
 
     private LatLng homeLatLng;
@@ -160,6 +155,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Rotorcraft rotorcraft;
     private Communication communication;
 
+    byte [] gpsData;
+
     public static MainActivity getInstance()
     {
         return mainActivityInstance;
@@ -183,8 +180,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mProduct = rotorcraft.getBaseProduct();
         }
 
-        missionConfigDataEncoder = new MissionConfigDataEncoder();
         missionConfigDataManager = new MissionConfigDataManager();
+
 
         super.onCreate(savedInstanceState);
 
@@ -581,12 +578,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if(point != null) {
 
-                    missionConfigDataEncoder.setLatitude(point.latitude);
-                    missionConfigDataEncoder.setLongitude(point.longitude);
-                    missionConfigDataEncoder.setAltitude(mAltitude);
-                    missionConfigDataEncoder.setSpeed(mSpeed);
+                    missionConfigDataManager.setLatitude(point.latitude);
+                    missionConfigDataManager.setLongitude(point.longitude);
+                    missionConfigDataManager.setAltitude(mAltitude);
+                    missionConfigDataManager.setSpeed(mSpeed);
 
-                    missionConfigDataManager.setMissionData(missionConfigDataEncoder);
                 }
 
 
@@ -658,12 +654,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        missionConfigDataEncoder.setSpeed(mSpeed);
 
 
-
-
-
-
-
-
     }
 
 
@@ -675,7 +665,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         markerOptions.position(point);
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         Marker marker = googleMap.addMarker(markerOptions);
-        markers.add(marker);
+        markerArrayList.add(marker);
     }
 
 
@@ -704,22 +694,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //TODO Document Orientation commands properly
                     case R.id.orientInitial_radio_button:
                         orientationCommand = 1;
-                        missionConfigDataEncoder.setCourseLock(orientationCommand);
+                        missionConfigDataManager.setCourseLock(orientationCommand);
                         break;
 
                     case R.id.orientNext_radio_button:
                         orientationCommand = 2;
-                        missionConfigDataEncoder.setCourseLock(orientationCommand);
+                        missionConfigDataManager.setCourseLock(orientationCommand);
                         break;
 
                     case R.id.orientWaypoint_radio_button:
                         orientationCommand = 4;
-                        missionConfigDataEncoder.setCourseLock(orientationCommand);
+                        missionConfigDataManager.setCourseLock(orientationCommand);
                         break;
 
                     case R.id.orientRc_radio_button:
                         orientationCommand = 3;
-                        missionConfigDataEncoder.setCourseLock(orientationCommand);
+                        missionConfigDataManager.setCourseLock(orientationCommand);
                         break;
                 }
 
@@ -728,62 +718,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //TODO Document Mission END commands properly
                     case R.id.hover_radio_button:
                         missionEndCommand = 1;
-                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
+                        missionConfigDataManager.setMissionEnd(missionEndCommand);
                         break;
 
                     case R.id.waypoint_radio_button:
                         missionEndCommand = 2;
-                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
+                        missionConfigDataManager.setMissionEnd(missionEndCommand);
                         break;
 
                     case R.id.returnhome_radio_button:
                         missionEndCommand = 3;
-                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
+                        missionConfigDataManager.setMissionEnd(missionEndCommand);
                         break;
 
                     case R.id.autoland_radio_button:
                         missionEndCommand = 4;
-                        missionConfigDataEncoder.setMissionEnd(missionEndCommand);
+                        missionConfigDataManager.setMissionEnd(missionEndCommand);
                         break;
                 }
-                missionConfigDataManager.setMissionData(missionConfigDataEncoder);
 
-                FlightController djiFC = rotorcraft.getFlightControllerInstance();
+                 byte[] data = {0};
 
-                //Retrieve current Data
-                MissionConfigDataEncoder data = missionConfigDataManager.getNextMissionData();
-                if(data == null)
+                if(markerArrayList.size() > 0)
                 {
-                    return;
-                }
+                    for(int i = 0; i < markerArrayList.size(); i++)
+                    {
+                        missionConfigDataManager.setLatitude(markerArrayList.get(i).getPosition().latitude);
+                        missionConfigDataManager.setLongitude(markerArrayList.get(i).getPosition().longitude);
+                        missionConfigDataManager.setAltitude(mAltitude);
+                        missionConfigDataManager.setSpeed(mSpeed);
 
-                // Send Data
-                byte[] bytes = data.getConfigData();
-                djiFC.sendDataToOnboardSDKDevice(bytes, new CommonCallbacks.CompletionCallback() {
-                    @Override
-                    public void onResult(DJIError djiError) {
-
-                        if (djiError == null)
-                        {
-                            Log.d(TAG, "DATA SENT TO ONBOARD DEVICE");
-                        }
-
-                        else
-                        {
-                            Log.e(TAG, djiError.getDescription());
-                        }
-
+                        data = missionConfigDataManager.getConfigData();
 
                     }
-                });
 
+                }
+                missionConfigDataManager.sendMissionData(data, rotorcraft.getFlightControllerInstance());
 
                 flightConfigPanel.setVisibility(v.GONE);
-
-
-
-
-
 
                 break;
 
@@ -796,7 +768,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 });
 
-                missionConfigDataEncoder = null;
+                missionConfigDataManager = null;
                 flightConfigPanel.setVisibility(v.GONE);
 
                 break;
