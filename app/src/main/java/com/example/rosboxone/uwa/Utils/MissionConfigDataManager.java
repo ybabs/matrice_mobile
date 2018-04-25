@@ -33,15 +33,15 @@ public class MissionConfigDataManager {
     private List<byte[]>ConfigDataList = new ArrayList<>();
 
 
-
-    private static final int ARRAY_SIZE = 27;
-    private static final int WAYPOINT_LATITUDE = 0;
-    private static final int WAYPOINT_LONGITUDE = 8;
-    private static final int WAYPOINT_ALTITUDE = 16;
-    private static final int WAYPOINT_ORIENTATION = 17;
-    private static final int WAYPOINT_SPEED = 21;
-    private static final int MISSION_END = 25;
-    private static final int NULL_POSITION = 26;
+    private static final int ARRAY_SIZE = 28;
+    private static final int COMMAND_POSITION = 0;
+    private static final int WAYPOINT_LATITUDE = 1;
+    private static final int WAYPOINT_LONGITUDE = 9;
+    private static final int WAYPOINT_ALTITUDE = 17;
+    private static final int WAYPOINT_ORIENTATION = 21;
+    private static final int WAYPOINT_SPEED = 22;
+    private static final int MISSION_END = 26;
+    private static final int NULL_POSITION = 27;
 
 
     private  double mLatitude;
@@ -70,7 +70,7 @@ public class MissionConfigDataManager {
     public byte [] getConfigData()
     {
         byte[] configData = new byte [ARRAY_SIZE];
-
+        configData[COMMAND_POSITION] = (byte)0x2f;
         DoubleToBytes(configData, WAYPOINT_LATITUDE, mLatitude);
         DoubleToBytes(configData, WAYPOINT_LONGITUDE, mLongitude);
         FloatToBytes(configData, WAYPOINT_ALTITUDE, mAltitude);
@@ -84,47 +84,7 @@ public class MissionConfigDataManager {
         return configData;
     }
 
-//    public void sendMissionData(byte [] data)
-//    {
-//
-//        if(!mReady)
-//        {
-//            Log.d(TAG, "Mission Data Manager Ready");
-//            mReady = true;
-//
-//        }
-//
-//        String text =Integer.toString(ConfigDataList.size());
-//
-//                if(ConfigDataList.size() > 0)
-//                {
-//                    for (int i = 0; i < ConfigDataList.size(); i++)
-//                    {
-//                        byte [] bytes = ConfigDataList.get(i);
-//
-//                        Toast.makeText(MainActivity.getInstance().getApplicationContext(), text, Toast.LENGTH_LONG).show();
-//
-//                        djiFC.sendDataToOnboardSDKDevice(bytes, new CommonCallbacks.CompletionCallback() {
-//                            @Override
-//                            public void onResult(DJIError djiError) {
-//
-//                                if (djiError == null)
-//                                {
-//                                    Log.d(TAG, "Sent Data to Onboard Device");
-//                                }
-//
-//                                else
-//                                {
-//                                    Log.e(TAG, djiError.getDescription());
-//                                }
-//
-//                            }
-//                        });
-//
-//                    }
-//                }
-//
-//    }
+
 
     public void sendMissionData(byte [] data,  FlightController djiFC)
     {
@@ -147,6 +107,8 @@ public class MissionConfigDataManager {
                                 Log.d(TAG, "Sent Data to Onboard Device");
                             } else {
                                 Log.e(TAG, djiError.getDescription());
+                                Toast.makeText(MainActivity.getInstance().getApplicationContext(), djiError.getDescription(), Toast.LENGTH_SHORT).show();
+
                             }
 
                         }
@@ -165,6 +127,27 @@ public class MissionConfigDataManager {
                 Toast.makeText(MainActivity.getInstance().getApplicationContext(), "NO FC", Toast.LENGTH_LONG).show();
             }
 
+    }
+
+    public void sendCommand(byte []data , FlightController djiFC)
+    {
+        if(djiFC!= null)
+        {
+            djiFC.sendDataToOnboardSDKDevice(data, new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    if(djiError == null)
+                    {
+
+                    }
+
+                    else
+                    {
+                        Toast.makeText(MainActivity.getInstance().getApplicationContext(), djiError.getDescription(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
     }
 
     @Override

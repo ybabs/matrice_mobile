@@ -32,9 +32,10 @@ import android.widget.Toast;
 
 
 import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
-import com.example.rosboxone.uwa.drone.Communication;
 import com.example.rosboxone.uwa.drone.Registration;
 import com.example.rosboxone.uwa.drone.Rotorcraft;
+import com.example.rosboxone.uwa.ros.MatriceFlightDataSubscriberNode;
+import com.example.rosboxone.uwa.ros.RosNodeConnection;
 import com.example.rosboxone.uwa.ui.SettingsActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -54,12 +55,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import dji.common.battery.BatteryState;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.util.CommonCallbacks;
+import dji.common.flightcontroller.FlightControllerState;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.flightcontroller.FlightController;
+import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 
@@ -123,6 +126,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RadioGroup orientationRadioGroup;
     private RadioGroup missionEndRadioGroup;
 
+    //Telemetry Status
+    private ImageView batteryStatusImageView;
+    private ImageView rcSignalImageView;
+    private ImageView gpsSignalImageView;
+
+
+
     //Homepage TextViews
     private TextView droneStatusTextView;
     private TextView satelliteCountTextView;
@@ -137,8 +147,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView heightSeekbarTextView;
     private RelativeLayout mainActivityLayout;
 
+    private int batteryVoltage;
+    private float batteryTemp;
+    private int batteryChargeRemaining;
+    private int satelliteCount = -1;
+
+
     // Homepage Hamburger Menu
     private ImageView leftMenu;
+
+
+
 
 
     //Lists to store Mission Waypoints
@@ -153,9 +172,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     SupportMapFragment mapFragment;
 
     private Rotorcraft rotorcraft;
-    private Communication communication;
+    private RosNodeConnection rosNodeConnection;
+    private MatriceFlightDataSubscriberNode matriceFlightDataSubscriberNode;
+    private FlightController flightController;
+    private FlightControllerState.Callback fcsCallback;
 
-    byte [] gpsData;
 
     public static MainActivity getInstance()
     {
@@ -180,12 +201,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mProduct = rotorcraft.getBaseProduct();
         }
 
+        flightController = rotorcraft.getFlightControllerInstance();
         missionConfigDataManager = new MissionConfigDataManager();
+        rosNodeConnection = new RosNodeConnection();
+        matriceFlightDataSubscriberNode = new MatriceFlightDataSubscriberNode();
+        flightController.setStateCallback(fcsCallback);
+
+        RosNodeConnection.getRosNodeInstance().launchNode(matriceFlightDataSubscriberNode);
 
 
         super.onCreate(savedInstanceState);
 
-        communication = new Communication();
+
 
         setWindowAttributes();
 
@@ -220,6 +247,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Make hamburger Menu Clickable
         leftMenu.setClickable(true);
+        land.setClickable(true);
+        takeoff.setClickable(true);
+        goHome.setClickable(true);
+
+
         leftMenu.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -239,6 +271,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+
+
+        land.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                byte [] LAND_CMD = {0x03};
+                missionConfigDataManager.sendCommand(LAND_CMD, rotorcraft.getFlightControllerInstance());
+
+            }
+        });
+
+        takeoff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                byte [] TAKEOFF_CMD = {0x01};
+                missionConfigDataManager.sendCommand(TAKEOFF_CMD, rotorcraft.getFlightControllerInstance());
+            }
+        });
+
+        goHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                byte [] GOHOME_CMD = {0x02};
+                missionConfigDataManager.sendCommand(GOHOME_CMD, rotorcraft.getFlightControllerInstance());
+
+            }
+        });
     }
 
     @Override
@@ -246,11 +306,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.e(TAG, "onResume");
 
         super.onResume();
+        rosNodeConnection.registerPreferencesChangeListener();
+        updateBatteryStatus();
+        updateSatelliteCount();
+
+
     }
 
     @Override
     public void onPause() {
         Log.e(TAG, "onPause");
+
         super.onPause();
     }
 
@@ -269,6 +335,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
         unregisterReceiver(mReceiver);
+        rosNodeConnection.unregisterPreferencesChangeListener();
         super.onDestroy();
     }
 
@@ -459,6 +526,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     {
 
 
+
         leftMenu = (ImageView) findViewById(R.id.hamburger_menu);
         takeoff = (LinearLayout) findViewById(R.id.takeoff);
         land = (LinearLayout) findViewById(R.id.land);
@@ -485,6 +553,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         orientationRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.orientation_rg);
         missionEndRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.mission_end_action_rg);
+
+        gpsSignalImageView = (ImageView)findViewById(R.id.gps_signal);
+        rcSignalImageView = (ImageView)findViewById(R.id.rc_signal);
+        batteryStatusImageView = (ImageView)findViewById(R.id.battery_status);
+
+
 
         droneStatusTextView = (TextView)findViewById(R.id.drone_Status);
         satelliteCountTextView = (TextView)findViewById(R.id.satellite_count_text);
@@ -552,6 +626,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        updateBatteryStatus();
+        updateSatelliteCount();
+
 
 
     }
@@ -588,6 +665,127 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+    }
+
+    //TODO Use Data sent back from the Drone on ROS to update Battery Voltage;
+    private void  updateBatteryStatus() {
+
+
+        final Handler mHandler = new Handler();
+
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (mProduct != null && mProduct.isConnected()) {
+                    if (mProduct instanceof Aircraft) {
+                        mProduct.getBattery().setStateCallback(new BatteryState.Callback() {
+                            @Override
+                            public void onUpdate(BatteryState batteryState) {
+
+                                batteryVoltage = batteryState.getVoltage();
+                                batteryTemp = batteryState.getTemperature();
+                                batteryChargeRemaining = batteryState.getChargeRemaining();
+                                updateBatteryImageView();
+
+                            }
+                        });
+                    }
+                }
+
+                mHandler.postDelayed(this, 1000);
+
+            }
+        }, 1000);
+
+
+    }
+
+   // TODO Update this with gpsHealth from ROS
+
+    private void updateSatelliteCount() {
+        final Handler mHandler = new Handler();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run()
+            {
+                 fcsCallback = new FlightControllerState.Callback() {
+                    @Override
+                    public void onUpdate(FlightControllerState flightControllerState) {
+
+                        satelliteCount = flightControllerState.getSatelliteCount();
+                        satelliteCountTextView.setText(String.valueOf(satelliteCount));
+
+                    }
+                };
+
+                mHandler.postDelayed(this, 1000);
+
+            }
+        }, 1000);
+
+
+    }
+
+    private void updateBatteryImageView()
+    {
+        final int temp [] = new int[1];
+
+        if(batteryChargeRemaining > 90 && batteryChargeRemaining <  100)
+        {
+            temp[0] = R.mipmap.battery10;
+        }
+
+        else if (batteryChargeRemaining > 80 && batteryChargeRemaining < 90)
+        {
+            temp[0] = R.mipmap.battery9;
+        }
+
+        else if (batteryChargeRemaining > 70 && batteryChargeRemaining < 80)
+        {
+            temp[0] = R.mipmap.battery8;
+        }
+
+        else if (batteryChargeRemaining > 60 && batteryChargeRemaining < 70)
+        {
+            temp[0] = R.mipmap.battery7;
+        }
+
+        else if (batteryChargeRemaining > 50 && batteryChargeRemaining < 60)
+        {
+            temp[0] = R.mipmap.battery6;
+        }
+
+        else if (batteryChargeRemaining > 40 && batteryChargeRemaining < 50)
+        {
+            temp[0] = R.mipmap.battery5;
+        }
+
+        else if (batteryChargeRemaining > 30 && batteryChargeRemaining < 40)
+        {
+            temp[0] = R.mipmap.battery4;
+        }
+        else if (batteryChargeRemaining > 20 && batteryChargeRemaining < 30)
+        {
+            temp[0] = R.mipmap.battery3;
+        }
+
+        else if (batteryChargeRemaining > 10 && batteryChargeRemaining < 20)
+        {
+            temp[0] = R.mipmap.battery2;
+        }
+
+        else if (batteryChargeRemaining < 10)
+        {
+            temp[0] = R.mipmap.battery1;
+        }
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                batteryStatusImageView.setImageDrawable(MainActivity.this.getDrawable(temp[0]));
+            }
+        });
+
     }
 
     // Updates Map with and marks current location of device in use
@@ -773,6 +971,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
 
+            case R.id.abort_btn:
+
+                break;
+
+
 
 
 
@@ -786,11 +989,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-    private void updateBatteryState(int batteryLeft)
-    {
-        // receive batteryState in form from
-
-    }
 
 
 

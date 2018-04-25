@@ -67,4 +67,6 @@ dependencies {
     compile 'org.ros.rosjava_messages:rosgraph_msgs:1.11.2'
     compile 'org.ros.rosjava_messages:sensor_msgs:1.12.5'
     compile 'org.ros.rosjava_messages:diagnostic_msgs:1.12.5'
+
+
 }

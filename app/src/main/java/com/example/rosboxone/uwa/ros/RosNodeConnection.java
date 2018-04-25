@@ -5,8 +5,10 @@ import android.content.SharedPreferences;
 import android.os.HandlerThread;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.widget.Toast;
 
 import com.example.rosboxone.uwa.MainActivity;
+import com.example.rosboxone.uwa.R;
 
 import static android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 
@@ -18,6 +20,7 @@ import org.ros.node.Node;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
+
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -45,6 +48,7 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
 
     private NodeMainExecutor nodeMainExecutor;
     private URI masterURI;
+    private SharedPreferences sharedPref;
 
 
     // Return Instance of ROS Connection
@@ -55,17 +59,31 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
             rosInstance = new RosNodeConnection();
         }
 
-        return  rosInstance;
+        return rosInstance;
     }
 
 
-    RosNodeConnection()
+    public void registerPreferencesChangeListener()
     {
-        // Get the PreferenceScreen Keys
-        Context context = MainActivity.getInstance().getApplicationContext();
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.getInstance().getApplicationContext());
+
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
+
+    }
+
+    public void unregisterPreferencesChangeListener()
+    {
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.getInstance().getApplicationContext());
+
+        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+
+    public RosNodeConnection()
+    {
+
         mAddress = "address";
         mPort = "port";
-
         mThread = new HandlerThread("ros");
         mThread.start();
         mHandler = new Handler(mThread.getLooper());
@@ -78,14 +96,24 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
     {
         //Return Shared Preferences from Main Activity
         MainActivity main = MainActivity.getInstance();
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(main);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(main);
+
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
 
         String address = sharedPref.getString(mAddress, "131.231.187.145");
-        int port = sharedPref.getInt(mPort, 11311);
+        int port = Integer.parseInt(sharedPref.getString(mPort, "11311"));
 
         URI rosURI = URI.create("http://" + String.valueOf(address) + ':' + String.valueOf(port)+ '/');
+//       URI rosURI = URI.create("http://131.231.187.145:11311/");
+
+       // onSharedPreferenceChanged(sharedPref, mKey);
+       // sharedPref.registerOnSharedPreferenceChangeListener(this);
 
         return  rosURI;
+    }
+
+    public SharedPreferences getSharedPref() {
+        return sharedPref;
     }
 
     /**
@@ -158,8 +186,16 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
             // Connect to the Master URI
             NodeConfiguration nodeConfiguration = NodeConfiguration.newPrivate(masterURI);
 
+            if (mNode ==null)
+            {
+                Toast.makeText(MainActivity.getInstance().getApplicationContext(), "No nodes were observed", Toast.LENGTH_LONG).show();
+            }
+
             // Start the ROS NOde
             nodeMainExecutor.execute(mNode, nodeConfiguration);
+            Toast.makeText(MainActivity.getInstance().getApplicationContext(), "node launched", Toast.LENGTH_LONG).show();
+
+
 
             if(!mNodes.contains(mNode))
             {
@@ -230,7 +266,6 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
             }
         }
 
-
     }
 
     @Override
@@ -244,6 +279,8 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
 
         // Recreate the URI from master node
         masterURI = getURISettings();
+
+        Toast.makeText(MainActivity.getInstance().getApplicationContext(), "Preferences Changed", Toast.LENGTH_LONG).show();
 
         restart();
 
