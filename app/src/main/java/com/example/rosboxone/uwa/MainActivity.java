@@ -31,9 +31,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.example.rosboxone.uwa.Utils.MathUtil;
 import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
 import com.example.rosboxone.uwa.drone.Registration;
-import com.example.rosboxone.uwa.drone.Rotorcraft;
+//import com.example.rosboxone.uwa.drone.Rotorcraft;
 import com.example.rosboxone.uwa.ros.MatriceFlightDataSubscriberNode;
 import com.example.rosboxone.uwa.ros.RosNodeConnection;
 import com.example.rosboxone.uwa.ui.SettingsActivity;
@@ -49,6 +50,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -143,6 +146,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView verticalspeedtextView;
     private TextView horizontalspeedtextView;
 
+   private double droneLocationLatitude;
+   private double droneLocationLongitude;
+   private double droneLocationAltitude;
+   private double droneDistanceToHome;
+   private double droneVerticalSpeed;
+   private double droneHorizontalSpeed;
+
     private TextView speedSeekbarTextView;
     private TextView heightSeekbarTextView;
     private RelativeLayout mainActivityLayout;
@@ -171,10 +181,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private FusedLocationProviderClient mFusedLocationClient;
     SupportMapFragment mapFragment;
 
-    private Rotorcraft rotorcraft;
+//    private Rotorcraft rotorcraft;
     private RosNodeConnection rosNodeConnection;
     private MatriceFlightDataSubscriberNode matriceFlightDataSubscriberNode;
-    private FlightController flightController;
+    private FlightController mFlightController;
     private FlightControllerState.Callback fcsCallback;
 
 
@@ -195,17 +205,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        if(rotorcraft == null)
-        {
-            rotorcraft = new Rotorcraft();
-            mProduct = rotorcraft.getBaseProduct();
-        }
+//        if(rotorcraft == null)
+//        {
+//            rotorcraft = new Rotorcraft();
+//            mProduct = rotorcraft.getBaseProduct();
+//        }
 
-        flightController = rotorcraft.getFlightControllerInstance();
+        //flightController = rotorcraft.getFlightControllerInstance();
         missionConfigDataManager = new MissionConfigDataManager();
         rosNodeConnection = new RosNodeConnection();
         matriceFlightDataSubscriberNode = new MatriceFlightDataSubscriberNode();
-        flightController.setStateCallback(fcsCallback);
+
 
         RosNodeConnection.getRosNodeInstance().launchNode(matriceFlightDataSubscriberNode);
 
@@ -233,9 +243,155 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mHandler = new Handler(Looper.getMainLooper());
 
 
-
+        initFlightController();
         initUI();
         initOnClickListener();
+
+
+
+    }
+
+    //TODO Testing to clean up later.
+    private void initFlightController()
+    {
+
+        BaseProduct product = Registration.getProductInstance();
+        if (product != null && product.isConnected()) {
+            if (product instanceof Aircraft) {
+                mFlightController = ((Aircraft) product).getFlightController();
+            }
+        }
+
+        if (mFlightController != null) {
+
+            updateFlightData();
+            addCallback();
+            //updateBatteryStatus();
+        }
+
+
+    }
+//    //TODO Use Data sent back from the Drone on ROS to update Battery Voltage;
+//    private void  updateBatteryStatus() {
+//
+//
+//        final Handler mHandler = new Handler();
+//
+//        mHandler.postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//                if (mProduct != null && mProduct.isConnected()) {
+//                    if (mProduct instanceof Aircraft) {
+//                        mProduct.getBattery().setStateCallback(new BatteryState.Callback() {
+//                            @Override
+//                            public void onUpdate(BatteryState batteryState) {
+//
+//                                batteryVoltage = batteryState.getVoltage();
+//                                batteryTemp = batteryState.getTemperature();
+//                                //batteryChargeRemaining = batteryState.getChargeRemaining();
+//                                updateBatteryImageView();
+//
+//                            }
+//                        });
+//                    }
+//                }
+//
+//                mHandler.postDelayed(this, 1000);
+//
+//            }
+//        }, 1000);
+//
+//
+//    }
+
+
+
+
+    private void addCallback() {
+        mFlightController.setOnboardSDKDeviceDataCallback(new FlightController.OnboardSDKDeviceDataCallback() {
+            @Override
+            public void onReceive(byte[] bytes) {
+
+
+                if(bytes[0] == 0x01)
+                {
+                    // Do velocity stuff here
+                }
+
+                if(bytes[0] == 0x04)
+                {
+                    // Do height Stuff here
+                }
+
+                if(bytes[0] == 0x02)
+                {
+                    // Battery Stuff should be set here
+                    batteryChargeRemaining = bytes[1];
+                    updateBatteryImageView();
+                    //showToast("Battery: " + batteryChargeRemaining);
+                }
+
+                if(bytes[0] == 0x03)
+                {
+
+                    // GPS Health here.
+                     satelliteCount = bytes[1];
+                     //showToast("GPS Health:" + satelliteCount);
+                     runOnUiThread(new Runnable() {
+                         @Override
+                         public void run() {
+                             satelliteCountTextView.setText(String.valueOf(satelliteCount));
+
+                         }
+                     });
+
+                }
+
+//                if(bytes[0] == 0x05)
+//                {
+//                    float Alt = bytes[3];
+//                    showToast("Alt: " + Alt);
+//                }
+
+
+            }
+        });
+    }
+
+    // Decided not to use the data from the onboard SDK for this bit.
+    private void updateFlightData()
+    {
+        mFlightController.setStateCallback(new FlightControllerState.Callback() {
+            @Override
+            public void onUpdate(@NonNull FlightControllerState flightControllerState) {
+                droneLocationLatitude = flightControllerState.getAircraftLocation().getLatitude();
+                droneLocationLongitude = flightControllerState.getAircraftLocation().getLongitude();
+                droneLocationAltitude = flightControllerState.getAircraftLocation().getAltitude();
+                droneDistanceToHome = MathUtil.CoordinateToDistanceConverter(flightControllerState.getHomeLocation().getLatitude(),
+                                      flightControllerState.getHomeLocation().getLongitude(), flightControllerState.getAircraftLocation().getLatitude(),
+                                      flightControllerState.getAircraftLocation().getLongitude());
+
+                double secondValue = MathUtil.LL2Distance(flightControllerState.getHomeLocation().getLatitude(),
+                        flightControllerState.getHomeLocation().getLongitude(), flightControllerState.getAircraftLocation().getLatitude(),
+                        flightControllerState.getAircraftLocation().getLongitude());
+
+                showToast("Distance = " + droneDistanceToHome + " vs" + secondValue);
+                droneVerticalSpeed = (int) (flightControllerState.getVelocityZ() * 10) == 0 ? 0.0000f : (-1.0) * flightControllerState.getVelocityZ();
+                droneHorizontalSpeed = MathUtil.computeScalarVelocity(flightControllerState.getVelocityX(), flightControllerState.getVelocityY());
+
+
+            }
+        });
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                homeDistanceTextView.setText(String.valueOf(droneDistanceToHome));
+                horizontalspeedtextView.setText(String.valueOf(droneHorizontalSpeed));
+                verticalspeedtextView.setText(String.valueOf(droneVerticalSpeed));
+            }
+        });
+
 
 
 
@@ -278,7 +434,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onClick(View view) {
 
                 byte [] LAND_CMD = {0x03};
-                missionConfigDataManager.sendCommand(LAND_CMD, rotorcraft.getFlightControllerInstance());
+                missionConfigDataManager.sendCommand(LAND_CMD, mFlightController);
 
             }
         });
@@ -287,7 +443,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View view) {
                 byte [] TAKEOFF_CMD = {0x01};
-                missionConfigDataManager.sendCommand(TAKEOFF_CMD, rotorcraft.getFlightControllerInstance());
+                missionConfigDataManager.sendCommand(TAKEOFF_CMD, mFlightController);
             }
         });
 
@@ -295,7 +451,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onClick(View view) {
                 byte [] GOHOME_CMD = {0x02};
-                missionConfigDataManager.sendCommand(GOHOME_CMD, rotorcraft.getFlightControllerInstance());
+                missionConfigDataManager.sendCommand(GOHOME_CMD, mFlightController);
 
             }
         });
@@ -306,9 +462,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Log.e(TAG, "onResume");
 
         super.onResume();
+        initFlightController();
         rosNodeConnection.registerPreferencesChangeListener();
-        updateBatteryStatus();
-        updateSatelliteCount();
+//        updateBatteryStatus();
+//        updateSatelliteCount();
 
 
     }
@@ -433,7 +590,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     @Override
                                     public void run() {
                                         showToast("The Aircraft is connected");
-                                        droneStatusTextView.setText(rotorcraft.getProductInstance().getModel().toString());
+                                        droneStatusTextView.setText(Registration.getProductInstance().getModel().toString());
 
                                     }
                                 });
@@ -462,7 +619,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             notifyStatusChange();
             if(isConnected)
             {
-                droneStatusTextView.setText(rotorcraft.getProductInstance().getModel().toString());
+               runOnUiThread(new Runnable() {
+                   @Override
+                   public void run() {
+                       droneStatusTextView.setText(Registration.getProductInstance().getModel().toString());
+
+                   }
+               });
                 showToast("The Aircraft is connected");
             }
 
@@ -532,7 +695,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         land = (LinearLayout) findViewById(R.id.land);
         goHome = (LinearLayout) findViewById(R.id.go_home);
         newMission = (LinearLayout)findViewById(R.id.new_mission);
-
 
 
         start = (Button) findViewById(R.id.start_btn);
@@ -626,8 +788,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-        updateBatteryStatus();
-        updateSatelliteCount();
+       // updateBatteryStatus();
+        //updateSatelliteCount();
 
 
 
@@ -637,11 +799,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            rotorcraft.onProductConnectionChanged();
+            //rotorcraft.onProductConnectionChanged();
+            onProductConnectionChange();
 
         }
     };
 
+    private void onProductConnectionChange()
+    {
+        initFlightController();
+
+    }
 
 
     private void setUpMap()
@@ -667,64 +835,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    //TODO Use Data sent back from the Drone on ROS to update Battery Voltage;
-    private void  updateBatteryStatus() {
-
-
-        final Handler mHandler = new Handler();
-
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (mProduct != null && mProduct.isConnected()) {
-                    if (mProduct instanceof Aircraft) {
-                        mProduct.getBattery().setStateCallback(new BatteryState.Callback() {
-                            @Override
-                            public void onUpdate(BatteryState batteryState) {
-
-                                batteryVoltage = batteryState.getVoltage();
-                                batteryTemp = batteryState.getTemperature();
-                                batteryChargeRemaining = batteryState.getChargeRemaining();
-                                updateBatteryImageView();
-
-                            }
-                        });
-                    }
-                }
-
-                mHandler.postDelayed(this, 1000);
-
-            }
-        }, 1000);
-
-
-    }
 
    // TODO Update this with gpsHealth from ROS
-
-    private void updateSatelliteCount() {
-        final Handler mHandler = new Handler();
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run()
-            {
-                 fcsCallback = new FlightControllerState.Callback() {
-                    @Override
-                    public void onUpdate(FlightControllerState flightControllerState) {
-
-                        satelliteCount = flightControllerState.getSatelliteCount();
-                        satelliteCountTextView.setText(String.valueOf(satelliteCount));
-
-                    }
-                };
-
-                mHandler.postDelayed(this, 1000);
-
-            }
-        }, 1000);
-
-
-    }
+//
+//    private void updateSatelliteCount() {
+//        final Handler mHandler = new Handler();
+//        mHandler.postDelayed(new Runnable() {
+//            @Override
+//            public void run()
+//            {
+//                 fcsCallback = new FlightControllerState.Callback() {
+//                    @Override
+//                    public void onUpdate(FlightControllerState flightControllerState) {
+//
+//                       // satelliteCount = flightControllerState.getSatelliteCount();
+//                        //satelliteCountTextView.setText(String.valueOf(satelliteCount));
+//
+//                    }
+//                };
+//
+//                mHandler.postDelayed(this, 1000);
+//
+//            }
+//        }, 1000);
+//
+//
+//    }
 
     private void updateBatteryImageView()
     {
@@ -951,7 +1087,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                 }
-                missionConfigDataManager.sendMissionData(data, rotorcraft.getFlightControllerInstance());
+                missionConfigDataManager.sendMissionData(data, mFlightController);
 
                 flightConfigPanel.setVisibility(v.GONE);
 

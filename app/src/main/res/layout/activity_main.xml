@@ -146,6 +146,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+
+
     </fragment>
 
     <LinearLayout
@@ -202,6 +204,8 @@
         android:text="ABORT"
         android:drawablePadding="10dp"
         android:background="@drawable/red_rounded_background" />
+
+
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -393,17 +397,17 @@
             />
 
         <TextView
+            android:id="@+id/v_speed_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/v_speed_title"
-            android:textColor="@color/colorWhite"
-            android:shadowRadius="5"
+            android:layout_marginLeft="10dp"
+            android:layout_toRightOf="@id/home_distance_text"
             android:shadowDx="0"
             android:shadowDy="0"
-            android:layout_toRightOf="@id/home_distance_text"
+            android:shadowRadius="5"
             android:text="V.S: "
-            android:textSize="12sp"
-            android:layout_marginLeft="10dp"/>
+            android:textColor="@color/colorWhite"
+            android:textSize="12sp" />
 
         <TextView
             android:layout_width="wrap_content"

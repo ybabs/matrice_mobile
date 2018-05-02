@@ -7,7 +7,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.rosboxone.uwa.MainActivity;
-import com.example.rosboxone.uwa.drone.Rotorcraft;
+//import com.example.rosboxone.uwa.drone.Rotorcraft;
 import com.google.android.gms.maps.model.LatLng;
 
 

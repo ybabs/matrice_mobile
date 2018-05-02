@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.secneo.sdk.Helper;
 
+
 public class MApplication extends Application {
 
     private Registration registration;
