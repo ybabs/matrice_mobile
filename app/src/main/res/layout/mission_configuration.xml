@@ -115,7 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:buttonTint="@color/colorWhite"
-                android:text=" HOVER"
+                android:text=" NO ACTION"
                 android:textColor="@color/colorWhite"
                 android:textSize="20sp" />
 

@@ -139,6 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //Homepage TextViews
     private TextView droneStatusTextView;
     private TextView satelliteCountTextView;
+    private TextView batteryLevelTextView;
     private TextView latitudeTextView;
     private TextView longitudeTextView;
     private  TextView altitudeTextView;
@@ -185,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RosNodeConnection rosNodeConnection;
     private MatriceFlightDataSubscriberNode matriceFlightDataSubscriberNode;
     private FlightController mFlightController;
-    private FlightControllerState.Callback fcsCallback;
+
 
 
     public static MainActivity getInstance()
@@ -375,7 +376,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         flightControllerState.getHomeLocation().getLongitude(), flightControllerState.getAircraftLocation().getLatitude(),
                         flightControllerState.getAircraftLocation().getLongitude());
 
-                showToast("Distance = " + droneDistanceToHome + " vs" + secondValue);
+                //showToast("Distance = " + droneDistanceToHome + " vs" + secondValue);
                 droneVerticalSpeed = (int) (flightControllerState.getVelocityZ() * 10) == 0 ? 0.0000f : (-1.0) * flightControllerState.getVelocityZ();
                 droneHorizontalSpeed = MathUtil.computeScalarVelocity(flightControllerState.getVelocityX(), flightControllerState.getVelocityY());
 
@@ -717,8 +718,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         missionEndRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.mission_end_action_rg);
 
         gpsSignalImageView = (ImageView)findViewById(R.id.gps_signal);
-        rcSignalImageView = (ImageView)findViewById(R.id.rc_signal);
         batteryStatusImageView = (ImageView)findViewById(R.id.battery_status);
+        batteryLevelTextView = (TextView)findViewById(R.id.battery_level_text);
 
 
 
@@ -919,6 +920,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 batteryStatusImageView.setImageDrawable(MainActivity.this.getDrawable(temp[0]));
+                batteryLevelTextView.setText(String.valueOf(batteryChargeRemaining) + "%");
             }
         });
 
@@ -1107,13 +1109,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
 
+                //When Abort button is pressed, aircraft goes home.
             case R.id.abort_btn:
-
+                byte [] GOHOME_CMD = {0x02};
+                missionConfigDataManager.sendCommand(GOHOME_CMD, mFlightController);
                 break;
 
-
-
-
+            case R.id.start_btn:
+                byte [] STARTMISSION_CMD = {0x1A};
+                missionConfigDataManager.sendCommand(STARTMISSION_CMD, mFlightController);
+                break;
 
             default:
                 break;

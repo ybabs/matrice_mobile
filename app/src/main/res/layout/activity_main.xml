@@ -85,27 +85,7 @@
                 android:layout_marginStart="10dp"
                 android:background="@color/colorWhite"/>
 
-            <ImageView
-                android:id="@+id/rc_signal"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:src="@mipmap/rc"/>
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_marginStart="5dp"
-                android:layout_marginEnd="5dp"
-                android:src="@mipmap/signal"/>
-            <View
-                android:layout_width="1dp"
-                android:layout_height="20dp"
-                android:layout_marginTop="3dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginBottom="3dp"
-                android:background="@color/colorWhite"/>
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
@@ -116,7 +96,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/satellite_count_text"
-                android:layout_gravity="top"
+                android:layout_gravity="center_vertical"
                 android:text="-"
                 android:textColor="#ffffff"/>
             <View
@@ -130,9 +110,17 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:layout_marginLeft="10dp"
+                android:layout_marginLeft="5dp"
                 android:id="@+id/battery_status"
                 android:src="@mipmap/battery10"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/battery_level_text"
+                android:layout_marginLeft="10dp"
+                android:layout_gravity="center_horizontal"
+                android:text="-"
+                android:textColor="@color/colorWhite"/>
 
         </LinearLayout>
 
@@ -285,8 +273,8 @@
 
 
     <RelativeLayout
-        android:layout_width="350dp"
-        android:layout_height="30dp"
+        android:layout_width="450dp"
+        android:layout_height="40dp"
         android:layout_marginBottom="10dp"
         android:background="@drawable/transparent_background"
         android:gravity="center_vertical"
@@ -305,7 +293,7 @@
             android:shadowDx="0"
             android:shadowDy="0"
             android:text="Lat: "
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:id="@+id/lat_title"/>
 
         <TextView
@@ -318,7 +306,7 @@
             android:text="N/A"
             android:layout_toRightOf="@id/lat_title"
             android:textColor="@color/colorWhite"
-            android:textSize="12sp"/>
+            android:textSize="14sp"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -329,7 +317,7 @@
             android:shadowDy="0"
             android:text="Lon: "
             android:layout_marginLeft="10dp"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:id="@+id/lon_title"
             android:layout_toRightOf="@id/lat_text"/>
 
@@ -343,7 +331,7 @@
             android:text="N/A"
             android:layout_toRightOf="@id/lon_title"
             android:textColor="@color/colorWhite"
-            android:textSize="12sp"/>
+            android:textSize="14sp"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -356,7 +344,7 @@
             android:layout_toRightOf="@id/lon_text"
             android:layout_marginLeft="10dp"
             android:text="H: "
-            android:textSize="12sp"/>
+            android:textSize="14sp"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -368,7 +356,7 @@
             android:shadowDy="0"
             android:layout_toRightOf="@id/altitude_title"
             android:text="N/A"
-            android:textSize="12sp"/>
+            android:textSize="14sp"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -380,7 +368,7 @@
             android:shadowDy="0"
             android:layout_toRightOf="@id/altitude_text"
             android:text="D: "
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:layout_marginLeft="10dp"/>
 
         <TextView
@@ -393,7 +381,7 @@
             android:shadowDy="0"
             android:layout_toRightOf="@id/home_distance_title"
             android:text="NA"
-            android:textSize="12sp"
+            android:textSize="14sp"
             />
 
         <TextView
@@ -407,7 +395,7 @@
             android:shadowRadius="5"
             android:text="V.S: "
             android:textColor="@color/colorWhite"
-            android:textSize="12sp" />
+            android:textSize="14sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -419,7 +407,7 @@
             android:shadowDy="0"
             android:layout_toRightOf="@id/v_speed_title"
             android:text="N/A"
-            android:textSize="12sp" />
+            android:textSize="14sp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -431,7 +419,7 @@
             android:shadowDy="0"
             android:layout_toRightOf="@id/v_speed_text"
             android:text="H.S: "
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:layout_marginLeft="10dp"/>
 
         <TextView
@@ -444,7 +432,7 @@
             android:shadowDy="0"
             android:layout_toRightOf="@id/h_speed_title"
             android:text="N/A"
-            android:textSize="12sp" />
+            android:textSize="14sp" />
 
 
     </RelativeLayout>

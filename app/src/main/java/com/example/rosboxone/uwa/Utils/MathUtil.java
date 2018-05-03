@@ -18,7 +18,7 @@ public  class MathUtil {
                    Math.sin(dLon/2) * Math.sin(dLon/2);
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        distance = R * c;
+        distance = R * c * 1000; // value in Metres.
 
         return  distance;
 
