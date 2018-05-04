@@ -49,4 +49,8 @@ public  class MathUtil {
         return velocity;
     }
 
+    public static boolean checkGpsCoordinates(double latitude, double longitude) {
+        return (latitude > -90 && latitude < 90 && longitude > -180 && longitude < 180) && (latitude != 0f && longitude != 0f);
+    }
+
 }

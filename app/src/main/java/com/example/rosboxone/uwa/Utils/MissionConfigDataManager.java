@@ -51,6 +51,7 @@ public class MissionConfigDataManager {
     private  byte mMissionEnd;
     private  float mSpeed;
     private boolean mReady;
+    byte[] dataToSend;
 
 
 
@@ -88,44 +89,57 @@ public class MissionConfigDataManager {
 
     public void sendMissionData(byte [] data,  FlightController djiFC)
     {
+        dataToSend = data;
+        final Handler handler = new Handler();
 
-        if(djiFC != null)
-        {
-            if(ConfigDataList.size() > 0)
-            {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
 
-                for(int i = 0; i < ConfigDataList.size(); i++)
+                if(djiFC != null)
                 {
+                    if(ConfigDataList.size() > 0)
+                    {
 
-                    data = ConfigDataList.get(i);
+                        for(int i = 0; i < ConfigDataList.size(); i++)
+                        {
 
-                    djiFC.sendDataToOnboardSDKDevice(data, new CommonCallbacks.CompletionCallback() {
-                        @Override
-                        public void onResult(DJIError djiError) {
+                            dataToSend = ConfigDataList.get(i);
 
-                            if (djiError == null) {
-                                Log.d(TAG, "Sent Data to Onboard Device");
-                            } else {
-                                Log.e(TAG, djiError.getDescription());
-                                Toast.makeText(MainActivity.getInstance().getApplicationContext(), djiError.getDescription(), Toast.LENGTH_SHORT).show();
+                            djiFC.sendDataToOnboardSDKDevice(data, new CommonCallbacks.CompletionCallback() {
+                                @Override
+                                public void onResult(DJIError djiError) {
 
-                            }
+                                    if (djiError == null) {
+                                        Log.d(TAG, "Sent Data to Onboard Device");
+                                    } else {
+                                        Log.e(TAG, djiError.getDescription());
+                                        Toast.makeText(MainActivity.getInstance().getApplicationContext(), djiError.getDescription(), Toast.LENGTH_SHORT).show();
+
+                                    }
+
+                                }
+                            });
+
 
                         }
-                    });
 
+
+                    }
+
+
+                }
+
+                else
+                {
+                    Toast.makeText(MainActivity.getInstance().getApplicationContext(), "NO FC", Toast.LENGTH_LONG).show();
                 }
 
 
             }
+        }, 1000);
 
 
-        }
-
-        else
-            {
-                Toast.makeText(MainActivity.getInstance().getApplicationContext(), "NO FC", Toast.LENGTH_LONG).show();
-            }
 
     }
 
@@ -255,6 +269,11 @@ public class MissionConfigDataManager {
     public void setMissionEnd(byte missionEndVal)
     {
         this.mMissionEnd = missionEndVal;
+    }
+
+    public void clearAllPoints()
+    {
+        ConfigDataList.clear();
     }
 
 

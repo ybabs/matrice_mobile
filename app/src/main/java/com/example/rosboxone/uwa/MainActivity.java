@@ -62,6 +62,8 @@ import dji.common.battery.BatteryState;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.common.flightcontroller.FlightControllerState;
+import dji.common.model.LocationCoordinate2D;
+import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.flightcontroller.FlightController;
@@ -102,6 +104,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private float mAltitude = 10.0f;
     private float mSpeed = 2.0f;
+    private Marker droneMarker = null;
+
 
 
     private static final String TAG = MainActivity.class.getName();
@@ -131,9 +135,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //Telemetry Status
     private ImageView batteryStatusImageView;
-    private ImageView rcSignalImageView;
-    private ImageView gpsSignalImageView;
-
 
 
     //Homepage TextViews
@@ -162,10 +163,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private float batteryTemp;
     private int batteryChargeRemaining;
     private int satelliteCount = -1;
+    private int droneHeight;
 
 
     // Homepage Hamburger Menu
     private ImageView leftMenu;
+    byte[] data = {0};
 
 
 
@@ -206,13 +209,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-//        if(rotorcraft == null)
-//        {
-//            rotorcraft = new Rotorcraft();
-//            mProduct = rotorcraft.getBaseProduct();
-//        }
 
-        //flightController = rotorcraft.getFlightControllerInstance();
         missionConfigDataManager = new MissionConfigDataManager();
         rosNodeConnection = new RosNodeConnection();
         matriceFlightDataSubscriberNode = new MatriceFlightDataSubscriberNode();
@@ -247,6 +244,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         initFlightController();
         initUI();
         initOnClickListener();
+        setHomeLocation();
 
 
 
@@ -272,41 +270,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     }
-//    //TODO Use Data sent back from the Drone on ROS to update Battery Voltage;
-//    private void  updateBatteryStatus() {
-//
-//
-//        final Handler mHandler = new Handler();
-//
-//        mHandler.postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                if (mProduct != null && mProduct.isConnected()) {
-//                    if (mProduct instanceof Aircraft) {
-//                        mProduct.getBattery().setStateCallback(new BatteryState.Callback() {
-//                            @Override
-//                            public void onUpdate(BatteryState batteryState) {
-//
-//                                batteryVoltage = batteryState.getVoltage();
-//                                batteryTemp = batteryState.getTemperature();
-//                                //batteryChargeRemaining = batteryState.getChargeRemaining();
-//                                updateBatteryImageView();
-//
-//                            }
-//                        });
-//                    }
-//                }
-//
-//                mHandler.postDelayed(this, 1000);
-//
-//            }
-//        }, 1000);
-//
-//
-//    }
-
-
-
 
     private void addCallback() {
         mFlightController.setOnboardSDKDeviceDataCallback(new FlightController.OnboardSDKDeviceDataCallback() {
@@ -321,7 +284,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if(bytes[0] == 0x04)
                 {
-                    // Do height Stuff here
+                   droneHeight = bytes[1];
+                   runOnUiThread(new Runnable() {
+                       @Override
+                       public void run() {
+                           altitudeTextView.setText(String.valueOf(droneHeight + " m"));
+                       }
+                   });
                 }
 
                 if(bytes[0] == 0x02)
@@ -348,15 +317,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 }
 
-//                if(bytes[0] == 0x05)
-//                {
-//                    float Alt = bytes[3];
-//                    showToast("Alt: " + Alt);
-//                }
-
-
             }
         });
+    }
+
+    private void setHomeLocation() {
+        if (mFlightController != null) {
+
+            mFlightController.setHomeLocation(new LocationCoordinate2D(homeLatLng.latitude, homeLatLng.longitude), new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError djiError) {
+                    String Text1 = Double.toString(homeLatLng.latitude);
+                    String Text2 = Double.toString(homeLatLng.longitude);
+                    showToast("Home Location set: " + Text1 + " ," + Text2 + (djiError == null ? " Successfully" : djiError.getDescription()));
+                }
+            });
+        }
     }
 
     // Decided not to use the data from the onboard SDK for this bit.
@@ -372,13 +348,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                       flightControllerState.getHomeLocation().getLongitude(), flightControllerState.getAircraftLocation().getLatitude(),
                                       flightControllerState.getAircraftLocation().getLongitude());
 
-                double secondValue = MathUtil.LL2Distance(flightControllerState.getHomeLocation().getLatitude(),
-                        flightControllerState.getHomeLocation().getLongitude(), flightControllerState.getAircraftLocation().getLatitude(),
-                        flightControllerState.getAircraftLocation().getLongitude());
+
 
                 //showToast("Distance = " + droneDistanceToHome + " vs" + secondValue);
                 droneVerticalSpeed = (int) (flightControllerState.getVelocityZ() * 10) == 0 ? 0.0000f : (-1.0) * flightControllerState.getVelocityZ();
                 droneHorizontalSpeed = MathUtil.computeScalarVelocity(flightControllerState.getVelocityX(), flightControllerState.getVelocityY());
+                updateDroneLocation();
 
 
             }
@@ -390,6 +365,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 homeDistanceTextView.setText(String.valueOf(droneDistanceToHome));
                 horizontalspeedtextView.setText(String.valueOf(droneHorizontalSpeed));
                 verticalspeedtextView.setText(String.valueOf(droneVerticalSpeed));
+                latitudeTextView.setText(String.format("%.6f",droneLocationLatitude));
+                longitudeTextView.setText(String.format("%.6f",droneLocationLongitude));
             }
         });
 
@@ -464,10 +441,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         super.onResume();
         initFlightController();
+        setHomeLocation();
         rosNodeConnection.registerPreferencesChangeListener();
-//        updateBatteryStatus();
-//        updateSatelliteCount();
-
 
     }
 
@@ -717,7 +692,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         orientationRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.orientation_rg);
         missionEndRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.mission_end_action_rg);
 
-        gpsSignalImageView = (ImageView)findViewById(R.id.gps_signal);
         batteryStatusImageView = (ImageView)findViewById(R.id.battery_status);
         batteryLevelTextView = (TextView)findViewById(R.id.battery_level_text);
 
@@ -789,10 +763,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-       // updateBatteryStatus();
-        //updateSatelliteCount();
-
-
 
     }
 
@@ -800,7 +770,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            //rotorcraft.onProductConnectionChanged();
+
             onProductConnectionChange();
 
         }
@@ -816,6 +786,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void setUpMap()
     {
         googleMap.setOnMapClickListener(this);
+        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng point) {
@@ -837,31 +808,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
-   // TODO Update this with gpsHealth from ROS
-//
-//    private void updateSatelliteCount() {
-//        final Handler mHandler = new Handler();
-//        mHandler.postDelayed(new Runnable() {
-//            @Override
-//            public void run()
-//            {
-//                 fcsCallback = new FlightControllerState.Callback() {
-//                    @Override
-//                    public void onUpdate(FlightControllerState flightControllerState) {
-//
-//                       // satelliteCount = flightControllerState.getSatelliteCount();
-//                        //satelliteCountTextView.setText(String.valueOf(satelliteCount));
-//
-//                    }
-//                };
-//
-//                mHandler.postDelayed(this, 1000);
-//
-//            }
-//        }, 1000);
-//
-//
-//    }
 
     private void updateBatteryImageView()
     {
@@ -982,14 +928,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         hamburgerRelativeLayout.setVisibility(View.GONE);
         flightConfigPanel.setVisibility(View.GONE);
 
-//        markWayPoint(point);
-//
-//        missionConfigDataEncoder.setLatitude(point.latitude);
-//        missionConfigDataEncoder.setLongitude(point.longitude);
-//        missionConfigDataEncoder.setAltitude(mAltitude);
-//        missionConfigDataEncoder.setSpeed(mSpeed);
-
-
     }
 
 
@@ -1004,28 +942,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         markerArrayList.add(marker);
     }
 
+    private void updateDroneLocation() {
+
+        LatLng pos = new LatLng(droneLocationLatitude, droneLocationLongitude);
+        //Create MarkerOptions object
+        final MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(pos);
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (droneMarker != null) {
+                    droneMarker.remove();
+                }
+
+                if (MathUtil.checkGpsCoordinates(droneLocationLatitude, droneLocationLongitude)) {
+                    droneMarker = googleMap.addMarker(markerOptions);
+
+                   latitudeTextView.setText(String.format("%.6f", droneLocationLatitude));
+                   longitudeTextView.setText(String.format("%.6f", droneLocationLongitude));
+
+                }
+            }
+        });
+    }
+
 
 
     @Override
     public void onClick(View v)
     {
 
-        switch (v.getId())
-        {
+        switch (v.getId()) {
             case R.id.ros_settings_button:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 break;
 
             case R.id.config_ok_btn:
+            {
 
                 mAltitude = heightSeekbar.getProgress();
                 mSpeed = speedSeekbar.getProgress();
                 byte orientationCommand;
                 byte missionEndCommand;
 
-                switch (orientationRadioGroup.getCheckedRadioButtonId())
-                {
+                switch (orientationRadioGroup.getCheckedRadioButtonId()) {
 
                     //TODO Document Orientation commands properly
                     case R.id.orientInitial_radio_button:
@@ -1049,8 +1012,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         break;
                 }
 
-                switch(missionEndRadioGroup.getCheckedRadioButtonId())
-                {
+                switch (missionEndRadioGroup.getCheckedRadioButtonId()) {
                     //TODO Document Mission END commands properly
                     case R.id.hover_radio_button:
                         missionEndCommand = 1;
@@ -1073,11 +1035,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         break;
                 }
 
-                 byte[] data = {0};
 
-                if(markerArrayList.size() > 0)
+
+                if (markerArrayList.size() > 0)
                 {
-                    for(int i = 0; i < markerArrayList.size(); i++)
+
+                    for (int i = 0; i < markerArrayList.size(); i++)
                     {
                         missionConfigDataManager.setLatitude(markerArrayList.get(i).getPosition().latitude);
                         missionConfigDataManager.setLongitude(markerArrayList.get(i).getPosition().longitude);
@@ -1086,16 +1049,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         data = missionConfigDataManager.getConfigData();
 
+                        missionConfigDataManager.sendMissionData(data, mFlightController);
                     }
-
                 }
-                missionConfigDataManager.sendMissionData(data, mFlightController);
 
                 flightConfigPanel.setVisibility(v.GONE);
-
                 break;
 
-            case R.id.config_cancel_btn:
+            }
+
+                    //byte[] data = {0};
+
+
+
+
+
+
+
+            case R.id.config_cancel_btn: {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -1104,21 +1075,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 });
 
-                missionConfigDataManager = null;
+
                 flightConfigPanel.setVisibility(v.GONE);
+                updateDroneLocation();
+                markHomePoint(homeLatLng);
+                byte[] CANCELMISSION_CMD = {0x3F};
+                missionConfigDataManager.sendCommand(CANCELMISSION_CMD, mFlightController);
+                missionConfigDataManager.clearAllPoints();
 
                 break;
+            }
 
-                //When Abort button is pressed, aircraft goes home.
-            case R.id.abort_btn:
-                byte [] GOHOME_CMD = {0x02};
+            //When Abort button is pressed, aircraft goes home.
+            case R.id.abort_btn: {
+                byte[] GOHOME_CMD = {0x02};
                 missionConfigDataManager.sendCommand(GOHOME_CMD, mFlightController);
                 break;
-
-            case R.id.start_btn:
-                byte [] STARTMISSION_CMD = {0x1A};
+            }
+            case R.id.start_btn: {
+                byte[] STARTMISSION_CMD = {0x1A};
                 missionConfigDataManager.sendCommand(STARTMISSION_CMD, mFlightController);
                 break;
+            }
 
             default:
                 break;
