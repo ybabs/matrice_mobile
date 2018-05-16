@@ -23,4 +23,9 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:title="Waypoints Altitude" >
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

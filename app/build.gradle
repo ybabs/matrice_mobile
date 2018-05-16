@@ -12,9 +12,9 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         multiDexEnabled true
-        ndk {
-            abiFilters 'armeabi-v7a', 'x86', 'arm64-v8a'
-        }
+//        ndk {
+//            abiFilters 'armeabi-v7a', 'x86', 'arm64-v8a'
+//        }
     }
     buildTypes {
         release {
@@ -31,7 +31,7 @@ android {
     dexOptions{
 
         javaMaxHeapSize "4g"
-        incremental = true;
+//        incremental = true;
         preDexLibraries = false
 
     }

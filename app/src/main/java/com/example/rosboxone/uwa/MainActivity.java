@@ -3,6 +3,7 @@ package com.example.rosboxone.uwa;
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -14,6 +15,7 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,6 +33,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.example.rosboxone.uwa.Utils.DataSender;
+import com.example.rosboxone.uwa.Utils.DataUtil;
 import com.example.rosboxone.uwa.Utils.MathUtil;
 import com.example.rosboxone.uwa.Utils.MissionConfigDataManager;
 import com.example.rosboxone.uwa.drone.Registration;
@@ -133,6 +137,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RadioGroup orientationRadioGroup;
     private RadioGroup missionEndRadioGroup;
 
+
+    private Button missionSettingsBtn;
+
     //Telemetry Status
     private ImageView batteryStatusImageView;
 
@@ -169,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Homepage Hamburger Menu
     private ImageView leftMenu;
     byte[] data = {0};
+    byte[] param_data = {0};
 
 
 
@@ -189,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RosNodeConnection rosNodeConnection;
     private MatriceFlightDataSubscriberNode matriceFlightDataSubscriberNode;
     private FlightController mFlightController;
+//    private DataSender dataSender;
 
 
 
@@ -213,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         missionConfigDataManager = new MissionConfigDataManager();
         rosNodeConnection = new RosNodeConnection();
         matriceFlightDataSubscriberNode = new MatriceFlightDataSubscriberNode();
+//        dataSender = new DataSender();
 
 
         RosNodeConnection.getRosNodeInstance().launchNode(matriceFlightDataSubscriberNode);
@@ -684,13 +694,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mainActivityLayout.addView(flightConfigPanel, missionParams);
         flightConfigPanel.setVisibility(View.GONE);
 
-        heightSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.height_param_seekbar);
+       // heightSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.height_param_seekbar);
         speedSeekbar = (SeekBar) flightConfigPanel.findViewById(R.id.speed_param_seekbar);
         missionOk = (Button) flightConfigPanel.findViewById(R.id.config_ok_btn);
         missionCancel= (Button)flightConfigPanel.findViewById(R.id.config_cancel_btn);
 
         orientationRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.orientation_rg);
         missionEndRadioGroup = (RadioGroup)flightConfigPanel.findViewById(R.id.mission_end_action_rg);
+
+
+        missionSettingsBtn = (Button) findViewById(R.id.mission_settings_button);
 
         batteryStatusImageView = (ImageView)findViewById(R.id.battery_status);
         batteryLevelTextView = (TextView)findViewById(R.id.battery_level_text);
@@ -707,7 +720,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         horizontalspeedtextView = (TextView) findViewById(R.id.h_speed_text);
 
         speedSeekbarTextView = (TextView)flightConfigPanel.findViewById(R.id.speed_param_text);
-        heightSeekbarTextView= (TextView)flightConfigPanel.findViewById(R.id.height_param_text);
+       // heightSeekbarTextView= (TextView)flightConfigPanel.findViewById(R.id.height_param_text);
 
 
         hamburgerRelativeLayout = (RelativeLayout) getLayoutInflater().inflate(R.layout.settings_configuration, null);
@@ -725,24 +738,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         missionCancel.setOnClickListener(this);
         rosSettingButton.setOnClickListener(this);
 
-        heightSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
-            {
-                heightSeekbarTextView.setText(String.format(Locale.UK, "Height:  %d m", progress + 1));
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
+//        heightSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+//            @Override
+//            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser)
+//            {
+//                heightSeekbarTextView.setText(String.format(Locale.UK, "Height:  %d m", progress + 1));
+//
+//            }
+//
+//            @Override
+//            public void onStartTrackingTouch(SeekBar seekBar) {
+//
+//            }
+//
+//            @Override
+//            public void onStopTrackingTouch(SeekBar seekBar) {
+//
+//            }
+//        });
 
         speedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -795,10 +808,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if(point != null) {
 
-                    missionConfigDataManager.setLatitude(point.latitude);
-                    missionConfigDataManager.setLongitude(point.longitude);
-                    missionConfigDataManager.setAltitude(mAltitude);
-                    missionConfigDataManager.setSpeed(mSpeed);
+                    LinearLayout waypointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_mission_settings, null);
+                    final TextView waypointAltitudeTextView = (TextView)waypointSettings.findViewById(R.id.altitude_editText);
+
+                    new AlertDialog.Builder(MainActivity.this).setTitle("").setView(waypointSettings)
+                            .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    String altitudeString = waypointAltitudeTextView.getText().toString();
+                                    mAltitude = Integer.parseInt(DataUtil.nullToIntegerDefault(altitudeString));
+                                    missionConfigDataManager.setLatitude(point.latitude);
+                                    missionConfigDataManager.setLongitude(point.longitude);
+                                    missionConfigDataManager.setAltitude(mAltitude);
+                                    missionConfigDataManager.setSpeed(mSpeed);
+
+                                    data = missionConfigDataManager.getConfigData();
+
+                                    missionConfigDataManager.sendMissionData(data, mFlightController);
+                                }
+                            })
+                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.cancel();
+                                }
+                            }).create().show();
 
                 }
 
@@ -806,6 +840,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
+
+//    private  void showSettingDialog()
+//    {
+//        LinearLayout waypointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_mission_settings, null);
+//        final TextView waypointAltitudeTextView = (TextView)waypointSettings.findViewById(R.id.altitude_editText);
+//
+//        new AlertDialog.Builder(this).setTitle("").setView(waypointSettings)
+//                .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialogInterface, int i) {
+//                        String altitudeString = waypointAltitudeTextView.getText().toString();
+//                        mAltitude = Integer.parseInt(DataUtil.nullToIntegerDefault(altitudeString));
+//                    }
+//                })
+//                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//                    @Override
+//                    public void onClick(DialogInterface dialogInterface, int i) {
+//                        dialogInterface.cancel();
+//                    }
+//                }).create().show();
+//    }
+//
+
 
 
 
@@ -980,10 +1037,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(settingsIntent);
                 break;
 
+
+
             case R.id.config_ok_btn:
             {
 
-                mAltitude = heightSeekbar.getProgress();
+              //  mAltitude = heightSeekbar.getProgress();
                 mSpeed = speedSeekbar.getProgress();
                 byte orientationCommand;
                 byte missionEndCommand;
@@ -1040,31 +1099,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (markerArrayList.size() > 0)
                 {
 
-                    for (int i = 0; i < markerArrayList.size(); i++)
-                    {
-                        missionConfigDataManager.setLatitude(markerArrayList.get(i).getPosition().latitude);
-                        missionConfigDataManager.setLongitude(markerArrayList.get(i).getPosition().longitude);
-                        missionConfigDataManager.setAltitude(mAltitude);
+                        missionConfigDataManager.clearAllPoints();
                         missionConfigDataManager.setSpeed(mSpeed);
 
-                        data = missionConfigDataManager.getConfigData();
+                        param_data = missionConfigDataManager.getParams();
+                        missionConfigDataManager.sendMissionParam(param_data, mFlightController);
 
-                        missionConfigDataManager.sendMissionData(data, mFlightController);
-                    }
+
                 }
 
                 flightConfigPanel.setVisibility(v.GONE);
                 break;
 
             }
-
-                    //byte[] data = {0};
-
-
-
-
-
-
 
             case R.id.config_cancel_btn: {
                 runOnUiThread(new Runnable() {

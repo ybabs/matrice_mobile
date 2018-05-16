@@ -58,6 +58,15 @@
         android:textSize="12sp" />
 
 
+    <Button
+        android:id="@+id/mission_settings_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="MISSION SETTINGS"
+        android:layout_marginTop="160dp"
+        android:textSize="12sp" />
+
+
 
 
 
