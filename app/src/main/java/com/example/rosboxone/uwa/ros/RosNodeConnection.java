@@ -63,27 +63,13 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
     }
 
 
-    public void registerPreferencesChangeListener()
-    {
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.getInstance().getApplicationContext());
-
-        sharedPref.registerOnSharedPreferenceChangeListener(this);
-
-    }
-
-    public void unregisterPreferencesChangeListener()
-    {
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(MainActivity.getInstance().getApplicationContext());
-
-        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
-    }
-
 
     public RosNodeConnection()
     {
 
-        mAddress = "address";
-        mPort = "port";
+        Context context = MainActivity.getInstance().getApplicationContext();
+        mAddress = context.getResources().getString(R.string.ip_address);
+        mPort = context.getResources().getString(R.string.port);
         mThread = new HandlerThread("ros");
         mThread.start();
         mHandler = new Handler(mThread.getLooper());
@@ -98,16 +84,12 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
         MainActivity main = MainActivity.getInstance();
         sharedPref = PreferenceManager.getDefaultSharedPreferences(main);
 
-        sharedPref.registerOnSharedPreferenceChangeListener(this);
 
+        //Address and port of the master node
         String address = sharedPref.getString(mAddress, "131.231.187.145");
         int port = Integer.parseInt(sharedPref.getString(mPort, "11311"));
 
         URI rosURI = URI.create("http://" + String.valueOf(address) + ':' + String.valueOf(port)+ '/');
-//       URI rosURI = URI.create("http://131.231.187.145:11311/");
-
-       // onSharedPreferenceChanged(sharedPref, mKey);
-       // sharedPref.registerOnSharedPreferenceChangeListener(this);
 
         return  rosURI;
     }
@@ -282,7 +264,11 @@ public class RosNodeConnection implements OnSharedPreferenceChangeListener
 
         Toast.makeText(MainActivity.getInstance().getApplicationContext(), "Preferences Changed", Toast.LENGTH_LONG).show();
 
+        // Restart node using new Address
         restart();
 
     }
+
+
+
 }

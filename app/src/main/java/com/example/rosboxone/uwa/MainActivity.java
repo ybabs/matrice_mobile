@@ -377,6 +377,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 verticalspeedtextView.setText(String.valueOf(droneVerticalSpeed));
                 latitudeTextView.setText(String.format("%.6f",droneLocationLatitude));
                 longitudeTextView.setText(String.format("%.6f",droneLocationLongitude));
+                altitudeTextView.setText(String.valueOf(droneLocationAltitude));
             }
         });
 
@@ -451,8 +452,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         super.onResume();
         initFlightController();
+        updateFlightData();     // Remove this later.......
         setHomeLocation();
-        rosNodeConnection.registerPreferencesChangeListener();
 
     }
 
@@ -478,7 +479,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         Log.e(TAG, "onDestroy");
         unregisterReceiver(mReceiver);
-        rosNodeConnection.unregisterPreferencesChangeListener();
         super.onDestroy();
     }
 

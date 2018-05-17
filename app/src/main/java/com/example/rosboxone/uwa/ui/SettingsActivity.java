@@ -32,7 +32,7 @@ public class SettingsActivity extends Activity {
 
 
 
-    public static class SettingsScreen extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener
+    public static class SettingsScreen extends PreferenceFragment
     {
 
         @Override
@@ -41,11 +41,6 @@ public class SettingsActivity extends Activity {
             super.onCreate(savedInstanceBundle);
             addPreferencesFromResource(R.xml.settings);
 
-            onSharedPreferenceChanged(null, "");
-            bindSummaryToValue(findPreference("address"));
-            bindSummaryToValue(findPreference("frequency"));
-            bindSummaryToValue(findPreference("port"));
-//
 
 
         }
@@ -54,54 +49,22 @@ public class SettingsActivity extends Activity {
         public void onResume()
         {
             super.onResume();
-            getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
         }
 
         @Override
         public void onPause()
         {
             super.onPause();
-            getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+
 
         }
 
-        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
-        {
-            Context context = MainActivity.getInstance().getApplicationContext();
-
-            EditTextPreference addressEP = (EditTextPreference) findPreference(context.getResources().getString(R.string.ip_address)) ;
-            addressEP.setSummary("");
-
-            Toast.makeText(context, "Preferences Changed", Toast.LENGTH_LONG).show();
-
-        }
 
 
     }
 
-    private static  void bindSummaryToValue(Preference preference)
-    {
-        preference.setOnPreferenceChangeListener(listener);
-        listener.onPreferenceChange(preference, PreferenceManager.getDefaultSharedPreferences(preference.getContext())
-                .getString(preference.getKey(), ""));
-    }
 
-    private  static Preference.OnPreferenceChangeListener listener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object newValue) {
-
-
-            String stringValue = newValue.toString();
-            if(preference instanceof EditTextPreference)
-            {
-                preference.setSummary(stringValue);
-
-            }
-            return false;
-
-
-        }
-    };
 
 
 }
