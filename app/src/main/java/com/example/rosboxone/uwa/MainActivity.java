@@ -70,6 +70,7 @@ import dji.common.model.LocationCoordinate2D;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
+import dji.sdk.battery.Battery;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
@@ -169,6 +170,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int batteryVoltage;
     private float batteryTemp;
     private int batteryChargeRemaining;
+    private int batteryChargeInPercent;
     private int satelliteCount = -1;
     private int droneHeight;
 
@@ -294,19 +296,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 if(bytes[0] == 0x04)
                 {
-                   droneHeight = bytes[1];
-                   runOnUiThread(new Runnable() {
-                       @Override
-                       public void run() {
-                           altitudeTextView.setText(String.valueOf(droneHeight + " m"));
-                       }
-                   });
+//                   droneHeight = bytes[1];
+//                   runOnUiThread(new Runnable() {
+//                       @Override
+//                       public void run() {
+//                           altitudeTextView.setText(String.valueOf(droneHeight + " m"));
+//                       }
+//                   });
                 }
 
                 if(bytes[0] == 0x02)
                 {
                     // Battery Stuff should be set here
-                    batteryChargeRemaining = bytes[1];
+                    //batteryChargeRemaining = bytes[1];
                     updateBatteryImageView();
                     //showToast("Battery: " + batteryChargeRemaining);
                 }
@@ -315,15 +317,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 {
 
                     // GPS Health here.
-                     satelliteCount = bytes[1];
-                     //showToast("GPS Health:" + satelliteCount);
-                     runOnUiThread(new Runnable() {
-                         @Override
-                         public void run() {
-                             satelliteCountTextView.setText(String.valueOf(satelliteCount));
-
-                         }
-                     });
+//                     satelliteCount = bytes[1];
+//                     //showToast("GPS Health:" + satelliteCount);
+//                     runOnUiThread(new Runnable() {
+//                         @Override
+//                         public void run() {
+//                             satelliteCountTextView.setText(String.valueOf(satelliteCount));
+//
+//                         }
+//                     });
 
                 }
 
@@ -345,6 +347,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    private void updateBatteryStatus()
+    {
+        final Handler mHandler = new Handler();
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run()
+            {
+                BaseProduct product = Registration.getProductInstance();
+                if (product != null && product.isConnected()) {
+                    if (product instanceof Aircraft) {
+                        product.getBattery().setStateCallback(new BatteryState.Callback() {
+                            @Override
+                            public void onUpdate(BatteryState batteryState) {
+                                batteryChargeInPercent = batteryState.getChargeRemainingInPercent();
+                                batteryChargeRemaining = batteryState.getChargeRemaining();
+                                batteryVoltage = batteryState.getVoltage();
+
+                                batteryTemp = batteryState.getTemperature();
+
+
+
+
+                            }
+                        });
+                    }
+                }
+                mHandler.postDelayed(this, 1000);
+
+            }
+        }, 1000);
+
+    }
+
     // Decided not to use the data from the onboard SDK for this bit.
     private void updateFlightData()
     {
@@ -364,27 +399,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 droneVerticalSpeed = (int) (flightControllerState.getVelocityZ() * 10) == 0 ? 0.0000f : (-1.0) * flightControllerState.getVelocityZ();
                 droneHorizontalSpeed = MathUtil.computeScalarVelocity(flightControllerState.getVelocityX(), flightControllerState.getVelocityY());
                 updateDroneLocation();
+                satelliteCount = flightControllerState.getSatelliteCount();
+
+
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        homeDistanceTextView.setText(String.format("%.2f", droneDistanceToHome) + " m");
+                        horizontalspeedtextView.setText(String.format("%.2f",droneHorizontalSpeed) + " m/s");
+                        verticalspeedtextView.setText(String.format("%.2f",droneVerticalSpeed) + " m/s");
+                        latitudeTextView.setText(String.format("%.6f",droneLocationLatitude));
+                        longitudeTextView.setText(String.format("%.6f",droneLocationLongitude));
+                        altitudeTextView.setText(String.format("%.1f",droneLocationAltitude) + " m");
+                        satelliteCountTextView.setText(satelliteCount);
+                    }
+                });
+
 
 
             }
         });
-
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                homeDistanceTextView.setText(String.valueOf(droneDistanceToHome));
-                horizontalspeedtextView.setText(String.valueOf(droneHorizontalSpeed));
-                verticalspeedtextView.setText(String.valueOf(droneVerticalSpeed));
-                latitudeTextView.setText(String.format("%.6f",droneLocationLatitude));
-                longitudeTextView.setText(String.format("%.6f",droneLocationLongitude));
-                altitudeTextView.setText(String.valueOf(droneLocationAltitude));
-            }
-        });
-
-
 
 
     }
+
+
 
     private void initOnClickListener()
     {
@@ -452,7 +492,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         super.onResume();
         initFlightController();
-        updateFlightData();     // Remove this later.......
         setHomeLocation();
 
     }
@@ -841,80 +880,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-//    private  void showSettingDialog()
-//    {
-//        LinearLayout waypointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_mission_settings, null);
-//        final TextView waypointAltitudeTextView = (TextView)waypointSettings.findViewById(R.id.altitude_editText);
-//
-//        new AlertDialog.Builder(this).setTitle("").setView(waypointSettings)
-//                .setPositiveButton("Okay", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        String altitudeString = waypointAltitudeTextView.getText().toString();
-//                        mAltitude = Integer.parseInt(DataUtil.nullToIntegerDefault(altitudeString));
-//                    }
-//                })
-//                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//                    @Override
-//                    public void onClick(DialogInterface dialogInterface, int i) {
-//                        dialogInterface.cancel();
-//                    }
-//                }).create().show();
-//    }
-//
-
-
-
 
     private void updateBatteryImageView()
     {
         final int temp [] = new int[1];
 
-        if(batteryChargeRemaining > 90 && batteryChargeRemaining <  100)
+        if(batteryChargeInPercent > 90 && batteryChargeInPercent <  100)
         {
             temp[0] = R.mipmap.battery10;
         }
 
-        else if (batteryChargeRemaining > 80 && batteryChargeRemaining < 90)
+        else if (batteryChargeInPercent > 80 && batteryChargeInPercent < 90)
         {
             temp[0] = R.mipmap.battery9;
         }
 
-        else if (batteryChargeRemaining > 70 && batteryChargeRemaining < 80)
+        else if (batteryChargeInPercent > 70 && batteryChargeInPercent < 80)
         {
             temp[0] = R.mipmap.battery8;
         }
 
-        else if (batteryChargeRemaining > 60 && batteryChargeRemaining < 70)
+        else if (batteryChargeInPercent > 60 && batteryChargeInPercent < 70)
         {
             temp[0] = R.mipmap.battery7;
         }
 
-        else if (batteryChargeRemaining > 50 && batteryChargeRemaining < 60)
+        else if (batteryChargeInPercent > 50 && batteryChargeInPercent < 60)
         {
             temp[0] = R.mipmap.battery6;
         }
 
-        else if (batteryChargeRemaining > 40 && batteryChargeRemaining < 50)
+        else if (batteryChargeInPercent > 40 && batteryChargeInPercent < 50)
         {
             temp[0] = R.mipmap.battery5;
         }
 
-        else if (batteryChargeRemaining > 30 && batteryChargeRemaining < 40)
+        else if (batteryChargeInPercent > 30 && batteryChargeInPercent < 40)
         {
             temp[0] = R.mipmap.battery4;
         }
-        else if (batteryChargeRemaining > 20 && batteryChargeRemaining < 30)
+        else if (batteryChargeInPercent > 20 && batteryChargeInPercent < 30)
         {
             temp[0] = R.mipmap.battery3;
         }
 
-        else if (batteryChargeRemaining > 10 && batteryChargeRemaining < 20)
+        else if (batteryChargeInPercent > 10 && batteryChargeInPercent < 20)
         {
             temp[0] = R.mipmap.battery2;
         }
 
-        else if (batteryChargeRemaining < 10)
+        else if (batteryChargeInPercent < 10)
         {
             temp[0] = R.mipmap.battery1;
         }
@@ -923,7 +938,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void run() {
                 batteryStatusImageView.setImageDrawable(MainActivity.this.getDrawable(temp[0]));
-                batteryLevelTextView.setText(String.valueOf(batteryChargeRemaining) + "%");
+                batteryLevelTextView.setText(String.valueOf(batteryChargeInPercent) + "%");
             }
         });
 
