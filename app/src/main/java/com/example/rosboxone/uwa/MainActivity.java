@@ -277,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             updateFlightData();
             addCallback();
-            //updateBatteryStatus();
+            updateBatteryStatus();
         }
 
 
@@ -400,6 +400,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 droneHorizontalSpeed = MathUtil.computeScalarVelocity(flightControllerState.getVelocityX(), flightControllerState.getVelocityY());
                 updateDroneLocation();
                 satelliteCount = flightControllerState.getSatelliteCount();
+                updateBatteryImageView();
 
 
 
@@ -412,7 +413,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         latitudeTextView.setText(String.format("%.6f",droneLocationLatitude));
                         longitudeTextView.setText(String.format("%.6f",droneLocationLongitude));
                         altitudeTextView.setText(String.format("%.1f",droneLocationAltitude) + " m");
-                        satelliteCountTextView.setText(satelliteCount);
+                        satelliteCountTextView.setText(String.valueOf(satelliteCount));
                     }
                 });
 
@@ -1166,9 +1167,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
 
-
     }
-
 
 
 

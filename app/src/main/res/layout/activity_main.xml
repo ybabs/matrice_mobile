@@ -118,7 +118,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/battery_level_text"
                 android:layout_marginLeft="10dp"
-                android:layout_gravity="center_horizontal"
+                android:layout_gravity="center_vertical"
                 android:text="-"
                 android:textColor="@color/colorWhite"/>
 

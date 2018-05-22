@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:text="WAYPOINT CONFIGURATION"
-            android:textSize="25sp"
+            android:textSize="20sp"
             android:textColor="@color/colorWhite"
             android:textAllCaps="true"
             android:textStyle="bold"></TextView>
@@ -37,7 +37,15 @@
             android:layout_marginLeft="15dp"
             android:layout_marginTop="10dp"
             android:textSize="20sp"
-            android:text="Altitude"></TextView>
+            android:text="Waypoint Altitude (metres)"></TextView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorWhite"
+            android:layout_marginLeft="15dp"
+            android:textSize="10sp"
+            android:text="Altitude must be less than 100m"></TextView>
 
         <EditText
             android:id="@+id/altitude_editText"
