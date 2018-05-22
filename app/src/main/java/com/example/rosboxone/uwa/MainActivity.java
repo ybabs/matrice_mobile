@@ -366,8 +366,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                 batteryTemp = batteryState.getTemperature();
 
-
-
+                                updateBatteryImageView();
 
                             }
                         });
@@ -400,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 droneHorizontalSpeed = MathUtil.computeScalarVelocity(flightControllerState.getVelocityX(), flightControllerState.getVelocityY());
                 updateDroneLocation();
                 satelliteCount = flightControllerState.getSatelliteCount();
-                updateBatteryImageView();
+
 
 
 
@@ -669,6 +668,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         homeDistanceTextView.setText("N/A");
                         verticalspeedtextView.setText("N/A");
                         horizontalspeedtextView.setText("N/A");
+                        batteryLevelTextView.setText("N/A");
 
                     }
                 });
