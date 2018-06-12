@@ -7,13 +7,12 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginEnd="15dp"
-        android:layout_marginStart="10dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="25dp"
         android:scrollbars="none">
-    </ScrollView>
+
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -41,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
-            android:layout_marginTop="30dp">
+            android:layout_marginTop="10dp">
 
             <TextView
                 android:id="@+id/speed_param_text"
@@ -96,10 +95,10 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="10dp"
             android:text="MISSION END"
             android:textColor="@color/colorWhite"
-            android:textSize="20sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <RadioGroup
@@ -117,7 +116,7 @@
                 android:buttonTint="@color/colorWhite"
                 android:text=" NO ACTION"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
 
             <RadioButton
                 android:id="@+id/waypoint_radio_button"
@@ -127,7 +126,7 @@
                 android:buttonTint="@color/colorWhite"
                 android:text="FIRST WAYPOINT"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
 
             <RadioButton
                 android:id="@+id/returnhome_radio_button"
@@ -137,7 +136,7 @@
                 android:buttonTint="@color/colorWhite"
                 android:text=" RETURN HOME"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
 
             <RadioButton
                 android:id="@+id/autoland_radio_button"
@@ -147,16 +146,16 @@
                 android:buttonTint="@color/colorWhite"
                 android:text=" AUTO LAND"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
         </RadioGroup>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="5dp"
             android:text="ORIENTATION"
             android:textColor="@color/colorWhite"
-            android:textSize="20sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
         <RadioGroup
@@ -175,7 +174,7 @@
                 android:buttonTint="@color/colorWhite"
                 android:text="AUTO"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
 
             <RadioButton
                 android:id="@+id/orientInitial_radio_button"
@@ -185,7 +184,7 @@
                 android:buttonTint="@color/colorWhite"
                 android:text="INITIAL"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
 
             <RadioButton
                 android:id="@+id/orientRc_radio_button"
@@ -195,7 +194,7 @@
                 android:buttonTint="@color/colorWhite"
                 android:text="REMOTE CONTROL"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
 
             <RadioButton
                 android:id="@+id/orientWaypoint_radio_button"
@@ -205,10 +204,14 @@
                 android:buttonTint="@color/colorWhite"
                 android:text="USE WAYPOINT"
                 android:textColor="@color/colorWhite"
-                android:textSize="20sp" />
+                android:textSize="10dp" />
         </RadioGroup>
 
     </LinearLayout>
+    </ScrollView>
+
+
+
 
     <LinearLayout
         android:layout_width="match_parent"

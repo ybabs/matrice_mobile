@@ -144,6 +144,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //Telemetry Status
     private ImageView batteryStatusImageView;
 
+    double mHomeLat;
+    double mHomeLon ;
+
+    LatLng test ;
+
+
 
     //Homepage TextViews
     private TextView droneStatusTextView;
@@ -288,44 +294,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onReceive(byte[] bytes) {
 
+                //showToast("Data Received: " + bytes[0]);
 
-                if(bytes[0] == 0x01)
-                {
-                    // Do velocity stuff here
-                }
-
-                if(bytes[0] == 0x04)
-                {
-//                   droneHeight = bytes[1];
-//                   runOnUiThread(new Runnable() {
-//                       @Override
-//                       public void run() {
-//                           altitudeTextView.setText(String.valueOf(droneHeight + " m"));
-//                       }
-//                   });
-                }
 
                 if(bytes[0] == 0x02)
                 {
-                    // Battery Stuff should be set here
-                    //batteryChargeRemaining = bytes[1];
-                    updateBatteryImageView();
-                    //showToast("Battery: " + batteryChargeRemaining);
+                    showToast("Error Uploading Waypoints");
+                   //Toast.makeText(getApplicationContext(), "Error Uploading Waypoints", Toast.LENGTH_SHORT).show();
                 }
 
-                if(bytes[0] == 0x03)
+                if(bytes[0] == 0x01)
                 {
+                    showToast("Waypoints Uploaded");
+                    //Toast.makeText(getApplicationContext(), "Waypoints Uploaded", Toast.LENGTH_SHORT).show();
 
-                    // GPS Health here.
-//                     satelliteCount = bytes[1];
-//                     //showToast("GPS Health:" + satelliteCount);
-//                     runOnUiThread(new Runnable() {
-//                         @Override
-//                         public void run() {
-//                             satelliteCountTextView.setText(String.valueOf(satelliteCount));
-//
-//                         }
-//                     });
+                }
+
+                if(bytes[0] == 0x01)
+                {
+                    showToast("Mission Started");
+                   //Toast.makeText(getApplicationContext(), "Mission Started", Toast.LENGTH_SHORT).show();
 
                 }
 
@@ -391,6 +379,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 droneDistanceToHome = MathUtil.CoordinateToDistanceConverter(flightControllerState.getHomeLocation().getLatitude(),
                                       flightControllerState.getHomeLocation().getLongitude(), flightControllerState.getAircraftLocation().getLatitude(),
                                       flightControllerState.getAircraftLocation().getLongitude());
+
+
+//                 mHomeLat = flightControllerState.getHomeLocation().getLatitude();
+//                mHomeLon = flightControllerState.getHomeLocation().getLongitude();
+//
+//                 test = new LatLng(mHomeLat, mHomeLon);
+
 
 
 
@@ -886,46 +881,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     {
         final int temp [] = new int[1];
 
-        if(batteryChargeInPercent > 90 && batteryChargeInPercent <  100)
+        if(batteryChargeInPercent >= 90 && batteryChargeInPercent <= 100)
         {
             temp[0] = R.mipmap.battery10;
         }
 
-        else if (batteryChargeInPercent > 80 && batteryChargeInPercent < 90)
+        else if (batteryChargeInPercent >= 80 && batteryChargeInPercent < 90)
         {
             temp[0] = R.mipmap.battery9;
         }
 
-        else if (batteryChargeInPercent > 70 && batteryChargeInPercent < 80)
+        else if (batteryChargeInPercent >= 70 && batteryChargeInPercent < 80)
         {
             temp[0] = R.mipmap.battery8;
         }
 
-        else if (batteryChargeInPercent > 60 && batteryChargeInPercent < 70)
+        else if (batteryChargeInPercent >= 60 && batteryChargeInPercent < 70)
         {
             temp[0] = R.mipmap.battery7;
         }
 
-        else if (batteryChargeInPercent > 50 && batteryChargeInPercent < 60)
+        else if (batteryChargeInPercent >= 50 && batteryChargeInPercent < 60)
         {
             temp[0] = R.mipmap.battery6;
         }
 
-        else if (batteryChargeInPercent > 40 && batteryChargeInPercent < 50)
+        else if (batteryChargeInPercent >= 40 && batteryChargeInPercent < 50)
         {
             temp[0] = R.mipmap.battery5;
         }
 
-        else if (batteryChargeInPercent > 30 && batteryChargeInPercent < 40)
+        else if (batteryChargeInPercent >= 30 && batteryChargeInPercent < 40)
         {
             temp[0] = R.mipmap.battery4;
         }
-        else if (batteryChargeInPercent > 20 && batteryChargeInPercent < 30)
+        else if (batteryChargeInPercent >= 20 && batteryChargeInPercent < 30)
         {
             temp[0] = R.mipmap.battery3;
         }
 
-        else if (batteryChargeInPercent > 10 && batteryChargeInPercent < 20)
+        else if (batteryChargeInPercent >= 10 && batteryChargeInPercent < 20)
         {
             temp[0] = R.mipmap.battery2;
         }
@@ -1015,6 +1010,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         markerArrayList.add(marker);
     }
 
+    private void markWayPoint2(LatLng point)
+    {
+        //Create MarkerOptions object
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(point);
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+        Marker marker = googleMap.addMarker(markerOptions);
+        markerArrayList.add(marker);
+    }
+
     private void updateDroneLocation() {
 
         LatLng pos = new LatLng(droneLocationLatitude, droneLocationLongitude);
@@ -1035,6 +1040,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                    latitudeTextView.setText(String.format("%.6f", droneLocationLatitude));
                    longitudeTextView.setText(String.format("%.6f", droneLocationLongitude));
+                   // markWayPoint2(test);
 
                 }
             }
